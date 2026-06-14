@@ -46,9 +46,19 @@ log = logging.getLogger("fitness_festival")
 
 app = FastAPI(title="Fitness Festival 2026 API", version="1.0.0")
 
+# Allowed frontend origins — hardcoded here, no .env variable needed
+# Add any extra domains below if you connect a custom domain later
+ALLOWED_ORIGINS = [
+    "https://fitness-festival.vercel.app",   # Vercel production
+    "http://localhost:3000",                  # local dev
+    "http://localhost:8000",                  # local FastAPI dev
+    "http://127.0.0.1:5500",                 # VS Code Live Server
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

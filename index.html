@@ -687,6 +687,10 @@
 <div class="toast" id="toast"></div>
 
 <script>
+  // ── API base URL — set this to your Render backend URL
+  // e.g. 'https://fitness-festival-api.onrender.com'
+  const API_BASE = 'https://fitness-festival.onrender.com';
+
   // ── State
   let selectedTicket = { type:'standard', label:'KSh 1,000', amount:1000 };
   let currentOrderId = null;
@@ -759,7 +763,7 @@
   async function doCheckout(data) {
     if (selectedTicket.amount === 0) {
       try {
-        const res = await fetch('/api/register-free',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...data,ticketType:selectedTicket.type}) });
+        const res = await fetch(API_BASE + '/api/register-free',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...data,ticketType:selectedTicket.type}) });
         const json = await res.json();
         showToast(json.success ? '✅ Free ticket sent to your email!' : json.message||'Registration failed.', json.success?'success':'error');
       } catch(e) { showToast('Network error. Try again.','error'); }
@@ -767,7 +771,7 @@
     }
     try {
       showToast('Initiating M-Pesa payment...','info');
-      const res = await fetch('/api/mpesa/stk-push',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...data,amount:selectedTicket.amount,ticketType:selectedTicket.type}) });
+      const res = await fetch(API_BASE + '/api/mpesa/stk-push',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...data,amount:selectedTicket.amount,ticketType:selectedTicket.type}) });
       const json = await res.json();
       if (json.success) { currentOrderId=json.orderId; openPayModal(data.phone, selectedTicket.label); }
       else showToast(json.message||'Could not initiate payment.','error');
@@ -788,7 +792,7 @@
     if (!currentOrderId) return;
     document.getElementById('checkBtn').textContent = 'Checking...';
     try {
-      const res = await fetch(`/api/mpesa/status/${currentOrderId}`);
+      const res = await fetch(API_BASE + `/api/mpesa/status/${currentOrderId}`);
       const json = await res.json();
       const badge = document.getElementById('payStatus');
       if (json.status==='completed') { badge.className='status-badge success'; badge.textContent='✅ Payment confirmed!'; document.getElementById('checkBtn').textContent='Done ✓'; showToast('🎉 Confirmed! Check your email for your ticket.','success'); setTimeout(closeModal,3000); }
