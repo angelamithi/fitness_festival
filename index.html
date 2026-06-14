@@ -773,7 +773,13 @@
       showToast('Initiating M-Pesa payment...','info');
       const res = await fetch(API_BASE + '/api/mpesa/stk-push',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...data,amount:selectedTicket.amount,ticketType:selectedTicket.type}) });
       const json = await res.json();
-      if (json.success) { currentOrderId=json.orderId; openPayModal(data.phone, selectedTicket.label); }
+      if (json.success) {
+        currentOrderId = json.order_id;
+        openPayModal(data.phone, selectedTicket.label);
+        // Sandbox: auto-simulate a successful payment after 3 seconds
+        // In production, the customer gets a real PIN prompt on their phone
+        setTimeout(() => simulateSandboxPayment(json.order_id), 3000);
+      }
       else showToast(json.message||'Could not initiate payment.','error');
     } catch(e) { showToast('Network error. Try again.','error'); }
   }
