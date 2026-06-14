@@ -788,6 +788,13 @@
   }
   function closeModal() { document.getElementById('payModal').classList.remove('open'); currentOrderId=null; }
 
+  // Sandbox helper — triggers a fake successful callback from Safaricom
+  async function simulateSandboxPayment(orderId) {
+    try {
+      await fetch(API_BASE + `/api/mpesa/simulate/${orderId}`, { method: 'POST' });
+    } catch(e) { /* silent — status polling will pick up the result */ }
+  }
+
   async function checkPaymentStatus() {
     if (!currentOrderId) return;
     document.getElementById('checkBtn').textContent = 'Checking...';

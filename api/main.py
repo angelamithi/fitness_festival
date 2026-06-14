@@ -95,6 +95,9 @@ class MpesaConfig:
 mpesa = MpesaConfig()
 IS_DEV = os.getenv("ENV", "development") != "production"
 
+# Startup check — logs passkey length without revealing the value
+log.info(f"M-Pesa env: {mpesa.env} | shortcode: {mpesa.shortcode} | passkey length: {len(mpesa.passkey)} chars (must be 64)")
+
 # Admin credentials — set these in your .env file
 ADMIN_USERNAME  = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD  = os.getenv("ADMIN_PASSWORD", "festival2026")   # change in .env!
@@ -467,6 +470,62 @@ async def mpesa_callback(request: Request):
         log.warning(f"Payment failed  order={order['order_id']}")
 
     return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
+
+@app.post("/api/mpesa/simulate/{order_id}")
+async def simulate_payment(order_id: str):
+    """
+    SANDBOX ONLY — manually trigger a successful payment result for an order.
+    Call this after initiating an STK push to simulate the user entering their PIN.
+    This mimics what Safaricom's callback sends when payment succeeds.
+    """
+    if os.getenv("MPESA_ENV", "sandbox") == "production":
+        raise HTTPException(status_code=403, detail="Simulation not allowed in production.")
+
+    order = orders.get(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found.")
+
+    if order["status"] == "completed":
+        return {"message": "Order already completed.", "order_id": order_id}
+
+    # Build a fake successful callback exactly as Safaricom would send it
+    fake_ref = "SIM" + "".join(random.choices(string.ascii_uppercase + string.digits, k=9))
+    fake_callback = {
+        "Body": {
+            "stkCallback": {
+                "MerchantRequestID": "sim-merchant-001",
+                "CheckoutRequestID": order.get("checkout_request_id", f"sim_{order_id}"),
+                "ResultCode": 0,
+                "ResultDesc": "The service request is processed successfully.",
+                "CallbackMetadata": {
+                    "Item": [
+                        {"Name": "Amount",              "Value": order["amount"]},
+                        {"Name": "MpesaReceiptNumber",  "Value": fake_ref},
+                        {"Name": "TransactionDate",     "Value": int(datetime.now().strftime("%Y%m%d%H%M%S"))},
+                        {"Name": "PhoneNumber",         "Value": order["phone"]},
+                    ]
+                }
+            }
+        }
+    }
+
+    # Process it through the real callback handler
+    from fastapi import Request as FastAPIRequest
+    import json
+
+    class FakeRequest:
+        async def json(self):
+            return fake_callback
+
+    await mpesa_callback(FakeRequest())
+    log.info(f"[SIMULATE] Payment simulated for order {order_id}  ref={fake_ref}")
+    return {
+        "message":  "Payment simulated successfully.",
+        "order_id": order_id,
+        "mpesa_ref": fake_ref,
+        "status":   "completed",
+    }
 
 
 @app.get("/api/mpesa/status/{order_id}")
