@@ -776,9 +776,11 @@
       if (json.success) {
         currentOrderId = json.order_id;
         openPayModal(data.phone, selectedTicket.label);
-        // Sandbox: auto-simulate a successful payment after 3 seconds
-        // In production, the customer gets a real PIN prompt on their phone
-        setTimeout(() => simulateSandboxPayment(json.order_id), 3000);
+        // Sandbox: simulate a successful payment immediately after STK push succeeds.
+        // Safaricom's sandbox fires its own failure callback within ~1 second,
+        // so we must simulate before that happens. In production this line never runs
+        // because real customers get a PIN prompt on their phone instead.
+        simulateSandboxPayment(json.order_id);
       }
       else showToast(json.message||'Could not initiate payment.','error');
     } catch(e) { showToast('Network error. Try again.','error'); }

@@ -465,6 +465,12 @@ async def mpesa_callback(request: Request):
             log.error(f"Email failed: {e}")
         log.info(f"Payment completed  order={order['order_id']}  ref={order['mpesa_ref']}")
     else:
+        # In sandbox, Safaricom immediately fires a failure callback automatically.
+        # We ignore it — our simulate endpoint will fire the real success callback shortly.
+        # In production this will never happen for a genuine payment.
+        if os.getenv("MPESA_ENV", "sandbox") == "sandbox":
+            log.info(f"[SANDBOX] Ignoring automatic failure callback for order={order['order_id']} — simulate will handle it")
+            return {"ResultCode": 0, "ResultDesc": "Accepted"}
         order["status"]         = "failed"
         order["failure_reason"] = callback.get("ResultDesc", "Unknown")
         log.warning(f"Payment failed  order={order['order_id']}")
@@ -575,7 +581,39 @@ async def register_free(body: FreeTicketRequest):
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "service": "Fitness Festival 2026", "env": os.getenv("ENV", "development")}
+    smtp_configured = bool(os.getenv("SMTP_USER") and os.getenv("SMTP_PASS"))
+    return {
+        "status":           "ok",
+        "service":          "Fitness Festival 2026",
+        "env":              os.getenv("ENV", "development"),
+        "smtp_configured":  smtp_configured,
+        "smtp_user":        os.getenv("SMTP_USER", "not set"),
+    }
+
+
+@app.post("/api/admin/test-email")
+async def test_email(request: Request, token: str = Depends(require_admin)):
+    """Send a test email to verify SMTP is configured correctly."""
+    body = await request.json()
+    to_email = body.get("email", os.getenv("SMTP_USER", ""))
+    if not to_email:
+        raise HTTPException(status_code=400, detail="No email address provided.")
+
+    test_ticket = {
+        "ticket_id":   "TKT-TEST01",
+        "name":        "Test User",
+        "phone":       "0700000000",
+        "email":       to_email,
+        "ticket_type": "standard",
+        "amount":      1000,
+        "mpesa_ref":   "TESTREF123",
+    }
+    try:
+        send_ticket_email(test_ticket)
+        return {"success": True, "message": f"Test email sent to {to_email}"}
+    except Exception as e:
+        log.error(f"Test email failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Email failed: {str(e)}")
 
 
 # ─────────────────────────────────────────────────────────────

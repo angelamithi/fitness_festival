@@ -524,44 +524,72 @@ function showPage(id, btn) {
   if (btn) btn.classList.add('active');
   const titles = {dashboard:'Dashboard',sales:'All Sales',checkin:'Gate Check-In',revenue:'Revenue',mpesa:'M-Pesa Logs',settings:'Settings'};
   document.getElementById('pageTitle').textContent = titles[id] || id;
-  if (id === 'sales') renderSalesTable(DEMO);
+  if (id === 'sales') renderSalesTable(getLiveData());
   if (id === 'revenue') renderRevenue();
   if (id === 'mpesa') renderMpesa();
 }
 
 // ── Load / refresh
-function loadData() {
+async function loadData() {
   document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('en-KE');
-  const completed = DEMO.filter(r=>r.status==='completed'||r.status==='free');
-  const revenue   = DEMO.filter(r=>r.status==='completed').reduce((s,r)=>s+r.amount,0);
-  const standard  = DEMO.filter(r=>r.type==='standard'&&(r.status==='completed'||r.status==='free')).length;
-  const free      = DEMO.filter(r=>r.type==='free').length;
-  const pending   = DEMO.filter(r=>r.status==='pending').length;
-  document.getElementById('stat-total').textContent   = completed.length;
-  document.getElementById('stat-revenue').textContent = 'KSh ' + revenue.toLocaleString();
-  document.getElementById('stat-standard').textContent = standard;
-  document.getElementById('stat-free').textContent     = free;
-  document.getElementById('stat-pending').textContent  = pending;
-  renderBarChart();
-  renderBreakdown(standard, free, pending);
-  renderRecentTable();
+  const token = getToken();
+  if (!token) return;
+
+  try {
+    // Fetch stats and tickets in parallel
+    const [statsRes, ticketsRes] = await Promise.all([
+      fetch(API_BASE + '/api/admin/stats',   { headers: { 'Authorization': 'Bearer ' + token } }),
+      fetch(API_BASE + '/api/admin/tickets', { headers: { 'Authorization': 'Bearer ' + token } }),
+    ]);
+
+    if (statsRes.status === 401 || ticketsRes.status === 401) {
+      logout(); return;
+    }
+
+    const stats   = await statsRes.json();
+    const tickets = await ticketsRes.json();
+
+    // Store live data globally so other pages can use it
+    window.LIVE_DATA = tickets;
+
+    // Update stat cards
+    document.getElementById('stat-total').textContent    = stats.total;
+    document.getElementById('stat-revenue').textContent  = 'KSh ' + stats.revenue.toLocaleString();
+    document.getElementById('stat-standard').textContent = stats.standard;
+    document.getElementById('stat-free').textContent     = stats.free;
+    document.getElementById('stat-pending').textContent  = stats.pending;
+
+    // Render charts and tables from live data
+    renderBarChartLive(tickets);
+    renderBreakdown(stats.standard, stats.free, stats.pending);
+    renderRecentTableLive(tickets);
+
+  } catch(e) {
+    showToast('Could not load data from server.', 'error');
+    console.error(e);
+  }
 }
 
-// ── Bar chart
-function renderBarChart() {
+function getLiveData() {
+  return window.LIVE_DATA || [];
+}
+
+// ── Bar chart (live data)
+function renderBarChartLive(tickets) {
   const days = [];
   const now = new Date();
   for (let i=6; i>=0; i--) {
     const d = new Date(now - i*86400000);
     const label = d.toLocaleDateString('en-KE',{weekday:'short'});
-    const count = DEMO.filter(r=>{
-      const rd = new Date(r.date); 
+    const count = tickets.filter(r=>{
+      const rd = new Date(r.created_at);
       return rd.toDateString()===d.toDateString() && r.status==='completed';
     }).length;
     days.push({label,count});
   }
   const max = Math.max(...days.map(d=>d.count),1);
-  document.getElementById('barChart').innerHTML = days.map(d=>`
+  const el = document.getElementById('barChart');
+  if (el) el.innerHTML = days.map(d=>`
     <div class="bar-group">
       <div class="bar-val">${d.count}</div>
       <div class="bar" style="height:${Math.round((d.count/max)*120)}px"></div>
@@ -569,6 +597,9 @@ function renderBarChart() {
     </div>
   `).join('');
 }
+
+// Keep old name as alias so revenue page still works
+function renderBarChart() { renderBarChartLive(getLiveData()); }
 
 function renderBreakdown(standard, free, pending) {
   const total = standard + free + pending || 1;
@@ -589,40 +620,43 @@ function renderBreakdown(standard, free, pending) {
   `).join('');
 }
 
-// ── Recent table
-function renderRecentTable() {
+// ── Recent table (live data)
+function renderRecentTableLive(tickets) {
   const tbody = document.getElementById('recentBody');
-  tbody.innerHTML = DEMO.slice(0,10).map(r=>`
+  if (!tbody) return;
+  const slice = tickets.slice(0,10);
+  tbody.innerHTML = slice.map(r=>`
     <tr>
-      <td><span class="ticket-id">${r.id}</span></td>
+      <td><span class="ticket-id">${r.ticket_id}</span></td>
       <td>${r.name}</td>
       <td>${r.phone}</td>
-      <td>${r.type==='free'?'Free/Disabled':'Standard'}</td>
+      <td>${r.ticket_type==='free'?'Free/Disabled':'Standard'}</td>
       <td>${r.amount?'KSh '+r.amount.toLocaleString():'Free'}</td>
       <td><span class="badge ${r.status}">${r.status}</span></td>
-      <td style="color:var(--muted);font-size:0.78rem;">${r.date.toLocaleString('en-KE',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+      <td style="color:var(--muted);font-size:0.78rem;">${new Date(r.created_at).toLocaleString('en-KE',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
     </tr>
   `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;">No transactions yet</td></tr>';
 }
+function renderRecentTable() { renderRecentTableLive(getLiveData()); }
 
 // ── Sales table
-let salesData = DEMO;
+let salesData = [];
 function renderSalesTable(data) {
   const start = (currentPage-1)*PER_PAGE, slice = data.slice(start, start+PER_PAGE);
   document.getElementById('salesCount').textContent = `${data.length} records`;
   document.getElementById('salesBody').innerHTML = slice.map(r=>`
     <tr>
-      <td><span class="ticket-id">${r.id}</span></td>
+      <td><span class="ticket-id">${r.ticket_id}</span></td>
       <td>${r.name}</td>
       <td style="font-size:0.78rem;color:var(--muted);">${r.email}</td>
       <td>${r.phone}</td>
-      <td>${r.type==='free'?'Free/Disabled':'Standard'}</td>
+      <td>${r.ticket_type==='free'?'Free/Disabled':'Standard'}</td>
       <td>${r.amount?'KSh '+r.amount.toLocaleString():'Free'}</td>
-      <td style="font-size:0.75rem;font-family:'Space Grotesk',sans-serif;color:var(--lime);">${r.mpesaRef}</td>
+      <td style="font-size:0.75rem;font-family:'Space Grotesk',sans-serif;color:var(--lime);">${r.mpesa_ref||'—'}</td>
       <td><span class="badge ${r.status}">${r.status}</span></td>
-      <td style="color:var(--muted);font-size:0.75rem;">${r.date.toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td style="color:var(--muted);font-size:0.75rem;">${new Date(r.created_at).toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'})}</td>
       <td>
-        <button onclick="viewTicket('${r.id}')" style="background:none;border:1px solid var(--border);color:var(--lime);padding:0.25rem 0.6rem;border-radius:4px;font-size:0.72rem;cursor:pointer;">View</button>
+        <button onclick="viewTicket('${r.ticket_id}')" style="background:none;border:1px solid var(--border);color:var(--lime);padding:0.25rem 0.6rem;border-radius:4px;font-size:0.72rem;cursor:pointer;">View</button>
       </td>
     </tr>
   `).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:2rem;">No data</td></tr>';
@@ -635,35 +669,38 @@ function renderSalesTable(data) {
 }
 function goPage(p) { currentPage=p; renderSalesTable(salesData); }
 function filterTable(q) {
-  salesData = q ? DEMO.filter(r=>r.name.toLowerCase().includes(q.toLowerCase())||r.phone.includes(q)||r.id.includes(q)) : DEMO;
+  const live = getLiveData();
+  salesData = q ? live.filter(r=>r.name.toLowerCase().includes(q.toLowerCase())||r.phone.includes(q)||r.ticket_id.includes(q)) : live;
   currentPage=1; renderSalesTable(salesData);
 }
 
 // ── Revenue
 function renderRevenue() {
-  const gross = DEMO.filter(r=>r.status==='completed').reduce((s,r)=>s+r.amount,0);
+  const live = getLiveData();
+  const gross = live.filter(r=>r.status==='completed').reduce((s,r)=>s+r.amount,0);
   const charges = Math.round(gross*0.015);
   document.getElementById('rev-gross').textContent = 'KSh '+gross.toLocaleString();
   document.getElementById('rev-charges').textContent = 'KSh '+charges.toLocaleString();
   document.getElementById('rev-net').textContent = 'KSh '+(gross-charges).toLocaleString();
-  document.getElementById('revBody').innerHTML = DEMO.filter(r=>r.status==='completed').map(r=>`
+  document.getElementById('revBody').innerHTML = live.filter(r=>r.status==='completed').map(r=>`
     <tr>
-      <td style="color:var(--muted);font-size:0.78rem;">${r.date.toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'})}</td>
-      <td><span class="ticket-id">${r.id}</span></td>
+      <td style="color:var(--muted);font-size:0.78rem;">${new Date(r.created_at).toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td><span class="ticket-id">${r.ticket_id}</span></td>
       <td>${r.name}</td>
       <td>KSh ${r.amount.toLocaleString()}</td>
-      <td style="font-family:'Space Grotesk',sans-serif;font-size:0.8rem;color:var(--lime);">${r.mpesaRef}</td>
+      <td style="font-family:'Space Grotesk',sans-serif;font-size:0.8rem;color:var(--lime);">${r.mpesa_ref||'—'}</td>
     </tr>
   `).join('');
   // Rev chart
   renderRevChart();
 }
 function renderRevChart() {
+  const live = getLiveData();
   const days = [];
   const now = new Date();
   for (let i=6;i>=0;i--) {
     const d=new Date(now-i*86400000);
-    const rev=DEMO.filter(r=>{const rd=new Date(r.date);return rd.toDateString()===d.toDateString()&&r.status==='completed';}).reduce((s,r)=>s+r.amount,0);
+    const rev=live.filter(r=>{const rd=new Date(r.created_at);return rd.toDateString()===d.toDateString()&&r.status==='completed';}).reduce((s,r)=>s+r.amount,0);
     days.push({label:d.toLocaleDateString('en-KE',{weekday:'short'}),rev});
   }
   const max=Math.max(...days.map(d=>d.rev),1);
@@ -678,17 +715,18 @@ function renderRevChart() {
 
 // ── M-Pesa logs
 function renderMpesa() {
-  document.getElementById('mpesaBody').innerHTML = DEMO.filter(r=>r.type!=='free').map(r=>`
+  const live = getLiveData().filter(r=>r.ticket_type!=='free');
+  document.getElementById('mpesaBody').innerHTML = live.map(r=>`
     <tr>
-      <td style="font-size:0.75rem;color:var(--muted);">${r.date.toLocaleString('en-KE')}</td>
-      <td><span class="ticket-id">${r.id}</span></td>
+      <td style="font-size:0.75rem;color:var(--muted);">${new Date(r.created_at).toLocaleString('en-KE')}</td>
+      <td><span class="ticket-id">${r.ticket_id}</span></td>
       <td>${r.phone}</td>
       <td>KSh ${r.amount.toLocaleString()}</td>
-      <td style="font-size:0.72rem;font-family:'Space Grotesk',sans-serif;color:var(--muted);">${r.mpesaRef}</td>
+      <td style="font-size:0.72rem;font-family:'Space Grotesk',sans-serif;color:var(--muted);">${r.mpesa_ref||'—'}</td>
       <td style="font-size:0.8rem;">${r.status==='completed'?'0 (Success)':r.status==='pending'?'—':'1032 (Cancelled)'}</td>
       <td><span class="badge ${r.status}">${r.status}</span></td>
     </tr>
-  `).join('');
+  `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;">No transactions yet</td></tr>';
 }
 
 // ── Check-in
@@ -696,7 +734,7 @@ function checkIn() {
   const val = document.getElementById('checkinInput').value.trim();
   const resultEl = document.getElementById('checkinResult');
   if (!val) return;
-  const ticket = DEMO.find(r=>r.id.toLowerCase()===val.toLowerCase()||r.phone===val.replace(/\s/g,''));
+  const ticket = getLiveData().find(r=>r.ticket_id.toLowerCase()===val.toLowerCase()||r.phone===val.replace(/\s/g,''));
   if (!ticket) {
     resultEl.innerHTML = `<div style="background:rgba(224,85,85,0.12);border:1px solid rgba(224,85,85,0.35);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">❌</div><p style="font-weight:600;color:#f07070;">Ticket Not Found</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">No ticket found for "${val}"</p></div>`;
     return;
@@ -705,16 +743,16 @@ function checkIn() {
     resultEl.innerHTML = `<div style="background:rgba(224,128,64,0.12);border:1px solid rgba(224,128,64,0.3);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">⚠️</div><p style="font-weight:600;color:#e09050;">Payment Not Confirmed</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">This ticket's payment is ${ticket.status}.</p></div>`;
     return;
   }
-  const alreadyIn = checkins.find(c=>c.id===ticket.id);
+  const alreadyIn = checkins.find(c=>c.id===ticket.ticket_id);
   if (alreadyIn) {
     resultEl.innerHTML = `<div style="background:rgba(224,128,64,0.12);border:1px solid rgba(224,128,64,0.3);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">🔁</div><p style="font-weight:600;color:#e09050;">Already Checked In</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">${ticket.name} was checked in at ${alreadyIn.time}</p></div>`;
     return;
   }
   const time = new Date().toLocaleTimeString('en-KE');
-  checkins.push({...ticket, time});
-  resultEl.innerHTML = `<div style="background:rgba(58,125,48,0.18);border:1px solid rgba(58,125,48,0.4);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2.5rem;margin-bottom:0.5rem;">✅</div><p style="font-weight:700;color:#7dca6a;font-size:1.1rem;">${ticket.name}</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">${ticket.id} · ${ticket.type==='free'?'Free/Disabled':'Standard'}</p><p style="color:var(--lime);font-size:0.8rem;margin-top:0.5rem;">Checked in at ${time}</p></div>`;
+  checkins.push({...ticket, time, id: ticket.ticket_id});
+  resultEl.innerHTML = `<div style="background:rgba(58,125,48,0.18);border:1px solid rgba(58,125,48,0.4);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2.5rem;margin-bottom:0.5rem;">✅</div><p style="font-weight:700;color:#7dca6a;font-size:1.1rem;">${ticket.name}</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">${ticket.ticket_id} · ${ticket.ticket_type==='free'?'Free/Disabled':'Standard'}</p><p style="color:var(--lime);font-size:0.8rem;margin-top:0.5rem;">Checked in at ${time}</p></div>`;
   document.getElementById('checkinBody').innerHTML = checkins.map(c=>`
-    <tr><td><span class="ticket-id">${c.id}</span></td><td>${c.name}</td><td>${c.type==='free'?'Free/Disabled':'Standard'}</td><td style="color:var(--lime);">${c.time}</td></tr>
+    <tr><td><span class="ticket-id">${c.ticket_id}</span></td><td>${c.name}</td><td>${c.ticket_type==='free'?'Free/Disabled':'Standard'}</td><td style="color:var(--lime);">${c.time}</td></tr>
   `).join('');
   document.getElementById('checkinInput').value='';
 }
@@ -722,7 +760,7 @@ function checkIn() {
 // ── Export CSV
 function exportCSV() {
   const headers = ['Ticket ID','Name','Email','Phone','Type','Amount','M-Pesa Ref','Status','Date'];
-  const rows = DEMO.map(r=>[r.id,r.name,r.email,r.phone,r.type,r.amount,r.mpesaRef,r.status,r.date.toLocaleDateString('en-KE')]);
+  const rows = getLiveData().map(r=>[r.ticket_id,r.name,r.email,r.phone,r.ticket_type,r.amount,r.mpesa_ref||'',r.status,new Date(r.created_at).toLocaleDateString('en-KE')]);
   const csv = [headers,...rows].map(r=>r.join(',')).join('\n');
   const blob = new Blob([csv],{type:'text/csv'});
   const a = document.createElement('a');
@@ -734,7 +772,7 @@ function exportCSV() {
 
 // ── View ticket (simple alert for demo)
 function viewTicket(id) {
-  const t = DEMO.find(r=>r.id===id);
+  const t = getLiveData().find(r=>r.ticket_id===id);
   if(t) showToast(`${t.name} · ${t.phone} · ${t.status}`,'info');
 }
 
