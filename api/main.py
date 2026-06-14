@@ -29,7 +29,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -156,17 +156,23 @@ class LoginRequest(BaseModel):
     password: str
 
 class TicketPurchaseRequest(BaseModel):
+    # populate_by_name lets us use either the alias (ticketType from JS)
+    # or the field name (ticket_type from Python) — both work
+    model_config = ConfigDict(populate_by_name=True)
+
     name:        str
     phone:       str
     email:       EmailStr
     amount:      int
-    ticket_type: str
+    ticket_type: str = Field(default="standard", alias="ticketType")
 
 class FreeTicketRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     name:        str
     phone:       Optional[str] = None
     email:       EmailStr
-    ticket_type: str = "free"
+    ticket_type: str = Field(default="free", alias="ticketType")
 
 
 # ─────────────────────────────────────────────────────────────
