@@ -15,6 +15,52 @@
     }
     body { background: var(--bg); color: var(--white); font-family: 'Inter', sans-serif; display: flex; min-height: 100vh; }
 
+    /* ── LOGIN SCREEN ── */
+    #loginScreen {
+      position: fixed; inset: 0; z-index: 999;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #loginScreen.hidden { display: none; }
+    .login-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 400px;
+      position: relative; overflow: hidden;
+    }
+    .login-box::before {
+      content: ''; position: absolute; top: -80px; right: -80px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(184,212,50,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .login-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--lime); line-height: 1; margin-bottom: 0.25rem; }
+    .login-sub { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 2rem; }
+    .login-field { margin-bottom: 1rem; }
+    .login-field label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.4rem; }
+    .login-field input {
+      width: 100%; background: var(--mid); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius); padding: 0.75rem 1rem;
+      color: var(--white); font-family: 'Inter', sans-serif; font-size: 0.95rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    .login-field input:focus { border-color: var(--lime); }
+    .login-btn {
+      width: 100%; background: var(--lime); color: var(--bg);
+      border: none; border-radius: var(--radius); padding: 0.9rem;
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem;
+      letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+      margin-top: 0.5rem; transition: all 0.2s;
+    }
+    .login-btn:hover { background: var(--gold); }
+    .login-btn:active { transform: scale(0.98); }
+    .login-error {
+      background: rgba(224,85,85,0.12); border: 1px solid rgba(224,85,85,0.35);
+      border-radius: var(--radius); padding: 0.65rem 1rem;
+      font-size: 0.82rem; color: #f08080;
+      margin-bottom: 1rem; display: none;
+    }
+    .login-error.show { display: block; }
+
     /* ── SIDEBAR ── */
     .sidebar {
       width: 240px; flex-shrink: 0; background: var(--sidebar);
@@ -165,6 +211,26 @@
 </head>
 <body>
 
+<!-- ── LOGIN SCREEN ── -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">FITNESS FESTIVAL</div>
+    <div class="login-sub">Admin Dashboard · Secure Access</div>
+    <div class="login-error" id="loginError">Incorrect username or password. Please try again.</div>
+    <div class="login-field">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter username" autocomplete="username"
+        onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()"/>
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')attemptLogin()"/>
+    </div>
+    <button class="login-btn" onclick="attemptLogin()">Sign In →</button>
+  </div>
+</div>
+
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-logo">
@@ -211,6 +277,7 @@
     <div class="right">
       <span style="font-size:0.75rem;color:var(--muted);">Last updated: <span id="lastUpdated">—</span></span>
       <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+      <button class="refresh-btn" style="color:#f08080;border-color:rgba(224,85,85,0.3);" onclick="logout()">⏻ Logout</button>
       <button class="export-btn" onclick="exportCSV()">↓ Export CSV</button>
     </div>
   </div>
@@ -680,8 +747,94 @@ function showToast(msg, type='info') {
   setTimeout(()=>{el.style.transform='translateY(80px)'; el.style.opacity='0';},3500);
 }
 
+// ── AUTH — credentials are validated by the backend API, never stored here
+const API_BASE = '';   // e.g. 'https://your-api.railway.app' when API is separate
+
+function getToken() {
+  return sessionStorage.getItem('ff_admin_token');
+}
+
+async function attemptLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const err  = document.getElementById('loginError');
+  const btn  = document.querySelector('.login-btn');
+
+  if (!user || !pass) {
+    err.textContent = 'Please enter your username and password.';
+    err.classList.add('show'); return;
+  }
+
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+
+  try {
+    const res  = await fetch(API_BASE + '/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, password: pass })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      sessionStorage.setItem('ff_admin_token', data.token);
+      sessionStorage.setItem('ff_admin_expires', data.expires_at);
+      document.getElementById('loginScreen').classList.add('hidden');
+      err.classList.remove('show');
+      loadData();
+    } else {
+      err.textContent = data.detail || 'Invalid username or password.';
+      err.classList.add('show');
+      document.getElementById('loginPass').value = '';
+      document.getElementById('loginPass').focus();
+    }
+  } catch(e) {
+    err.textContent = 'Cannot reach server. Is the backend running?';
+    err.classList.add('show');
+  }
+
+  btn.textContent = 'Sign In →'; btn.disabled = false;
+}
+
+async function logout() {
+  const token = getToken();
+  if (token) {
+    // Tell the server to invalidate the token
+    await fetch(API_BASE + '/api/admin/logout', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token }
+    }).catch(() => {});
+  }
+  sessionStorage.removeItem('ff_admin_token');
+  sessionStorage.removeItem('ff_admin_expires');
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginError').classList.remove('show');
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+// ── Verify existing token on page load
+(async function() {
+  const token = getToken();
+  if (token) {
+    try {
+      const res = await fetch(API_BASE + '/api/admin/verify', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (res.ok) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        loadData();
+        return;
+      }
+    } catch(e) {}
+    // Token invalid or expired — clear it
+    sessionStorage.removeItem('ff_admin_token');
+    sessionStorage.removeItem('ff_admin_expires');
+  }
+  setTimeout(() => document.getElementById('loginUser').focus(), 100);
+})();
+
 // ── Boot
-loadData();
+// loadData() is now called after successful login or token verification
 </script>
 </body>
 </html>
