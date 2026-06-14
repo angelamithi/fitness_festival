@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nandi Fitness Festival 2026 | Powered by Eastern Produce Kenya</title>
+  <title>The Nandi Fitness Festival 2026 | Powered by Eastern Produce Kenya</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@700;800&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -309,9 +309,12 @@
     footer .footer-inner { max-width: 1200px; margin: 0 auto; }
     footer .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--accent-lime); margin-bottom: 0.5rem; }
     footer p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.25rem; }
-    footer .footer-links { display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem; flex-wrap: wrap; }
-    footer .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 0.8rem; transition: color 0.2s; }
-    footer .footer-links a:hover { color: var(--accent-lime); }
+    footer .footer-links { display: flex; justify-content: center; gap: 0; margin-top: 1.5rem; flex-wrap: wrap; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; width: fit-content; margin-left: auto; margin-right: auto; }
+    footer .footer-links a { color: var(--text-white); text-decoration: none; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.55rem 1.25rem; border-right: 1px solid var(--border); transition: all 0.2s; }
+    footer .footer-links a:last-child { border-right: none; }
+    footer .footer-links a:hover { color: var(--bg-dark); background: var(--accent-lime); }
+    footer .footer-links a.admin-link { color: var(--accent-lime); }
+    footer .footer-links a.admin-link:hover { color: var(--bg-dark); background: var(--accent-lime); }
 
     /* ── TOAST ── */
     .toast { position: fixed; bottom: 2rem; right: 2rem; z-index: 300; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.5rem; font-size: 0.875rem; max-width: 340px; transform: translateY(120px); opacity: 0; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none; }
@@ -607,7 +610,7 @@
     <h2 class="section-title reveal">GET YOUR TICKET</h2>
     <div class="tickets-layout">
       <div class="ticket-info reveal">
-        <p class="section-sub">Secure your spot at The Fitness Festival 2026. Pay instantly with M-Pesa — no queues, no cash.</p>
+        <p class="section-sub">Secure your spot at The Nandi Fitness Festival 2026. Pay instantly with M-Pesa — no queues, no cash.</p>
         <div class="ticket-feature"><div class="ticket-feature-icon">📲</div><div><h5>M-Pesa STK Push</h5><p>Enter your Safaricom number and receive an instant payment prompt on your phone.</p></div></div>
         <div class="ticket-feature"><div class="ticket-feature-icon">✉️</div><div><h5>Instant Confirmation</h5><p>Receive your e-ticket via email immediately after payment is confirmed.</p></div></div>
         <div class="ticket-feature"><div class="ticket-feature-icon">♿</div><div><h5>Free Disabled Access</h5><p>Complimentary entry for persons with disabilities. Present valid documentation at the gate.</p></div></div>
@@ -662,7 +665,7 @@
     <p style="margin-top:0.25rem;">08 August 2026 · Nandi Bears Club · Nandi Hills, Kenya</p>
     <div class="footer-links">
       <a href="#schedule">Schedule</a><a href="#tickets">Tickets</a>
-      <a href="#venue">Venue</a><a href="/admin">Admin</a>
+      <a href="#venue">Venue</a><a href="/admin" class="admin-link">⚙ Admin</a>
     </div>
     <p style="margin-top:2rem;font-size:0.75rem;color:rgba(138,158,130,0.5);">© 2026 Eastern Produce Kenya Limited. All rights reserved.</p>
   </div>
@@ -689,7 +692,9 @@
 <script>
   // ── API base URL — set this to your Render backend URL
   // e.g. 'https://fitness-festival-api.onrender.com'
-  const API_BASE = 'https://fitness-festival.onrender.com';
+  const API_BASE  = 'https://fitness-festival.onrender.com';
+  // Set to false once MPESA_ENV=production is set on Render
+  const IS_SANDBOX = true;
 
   // ── State
   let selectedTicket = { type:'standard', label:'KSh 1,000', amount:1000 };
@@ -776,11 +781,9 @@
       if (json.success) {
         currentOrderId = json.order_id;
         openPayModal(data.phone, selectedTicket.label);
-        // Sandbox: simulate a successful payment immediately after STK push succeeds.
-        // Safaricom's sandbox fires its own failure callback within ~1 second,
-        // so we must simulate before that happens. In production this line never runs
-        // because real customers get a PIN prompt on their phone instead.
-        simulateSandboxPayment(json.order_id);
+        // In sandbox: simulate payment immediately (no real phone available).
+        // In production: customer receives a real PIN prompt — nothing to simulate.
+        if (IS_SANDBOX) simulateSandboxPayment(json.order_id);
       }
       else showToast(json.message||'Could not initiate payment.','error');
     } catch(e) { showToast('Network error. Try again.','error'); }
@@ -798,9 +801,17 @@
 
   // Sandbox helper — triggers a fake successful callback from Safaricom
   async function simulateSandboxPayment(orderId) {
+    console.log('[SANDBOX] Firing simulate for order:', orderId);
     try {
-      await fetch(API_BASE + `/api/mpesa/simulate/${orderId}`, { method: 'POST' });
-    } catch(e) { /* silent — status polling will pick up the result */ }
+      const res = await fetch(API_BASE + '/api/mpesa/simulate/' + orderId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      console.log('[SANDBOX] Simulate response:', data);
+    } catch(e) {
+      console.error('[SANDBOX] Simulate error:', e);
+    }
   }
 
   async function checkPaymentStatus() {
