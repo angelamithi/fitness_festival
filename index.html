@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Fitness Festival 2026 | Powered by Eastern Produce Kenya</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@700;800&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-dark:     #0d1f0f;
+      --bg-mid:      #142418;
+      --bg-card:     #1a2e1c;
+      --accent-lime: #b8d432;
+      --accent-gold: #e8c840;
+      --accent-green:#3a7d30;
+      --text-white:  #f5f5f0;
+      --text-muted:  #8a9e82;
+      --border:      rgba(184,212,50,0.18);
+      --radius:      8px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg-dark); color: var(--text-white); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2.5rem;
+      background: rgba(13,31,15,0.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 0.75rem; }
+    .nav-logo-text { font-family: 'DM Sans', sans-serif; font-weight: 800; font-size: 1rem; line-height: 1.15; letter-spacing: 0.04em; text-transform: uppercase; }
+    .nav-logo-text span { font-family: 'Rajdhani', sans-serif; color: var(--accent-lime); display: block; font-size: 0.65rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; margin-top: 0.1rem; }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.875rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--accent-lime); }
+    .nav-cta { background: var(--accent-lime); color: var(--bg-dark); padding: 0.6rem 1.5rem; border-radius: var(--radius); font-weight: 700; font-size: 0.85rem; text-decoration: none; letter-spacing: 0.06em; text-transform: uppercase; transition: background 0.2s, transform 0.15s; }
+    .nav-cta:hover { background: var(--accent-gold); transform: translateY(-1px); }
+    .menu-toggle { display: none; background: none; border: none; color: var(--text-white); font-size: 1.5rem; cursor: pointer; }
+
+    /* ── HERO WITH VIDEO ── */
+    #hero { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; padding-top: 5rem; }
+
+    /* Video background */
+    .hero-video-wrap {
+      position: absolute; inset: 0; z-index: 0;
+      overflow: hidden;
+    }
+    .hero-video-wrap video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: brightness(0.28) saturate(1.5);
+    }
+    /* Fallback image shown while video loads or if it fails */
+    .hero-video-wrap::before {
+      content: '';
+      position: absolute; inset: 0; z-index: -1;
+      background: url('https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1600&q=80') center/cover no-repeat;
+      filter: brightness(0.28) saturate(1.4);
+    }
+    .hero-overlay {
+      position: absolute; inset: 0; z-index: 1;
+      background: linear-gradient(135deg, rgba(13,31,15,0.97) 0%, rgba(13,31,15,0.5) 55%, rgba(13,31,15,0.92) 100%);
+    }
+    .hero-grid {
+      position: relative; z-index: 2;
+      display: grid; grid-template-columns: 1fr 420px; gap: 4rem;
+      max-width: 1200px; width: 100%; margin: 0 auto; padding: 3rem 2.5rem;
+      align-items: center;
+    }
+    .hero-eyebrow { font-family: 'Space Grotesk', sans-serif; font-size: 0.78rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent-lime); font-weight: 600; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
+    .hero-eyebrow::before { content: ''; display: block; width: 32px; height: 2px; background: var(--accent-lime); }
+    .hero-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(5rem, 12vw, 9.5rem); line-height: 0.92; letter-spacing: 0.02em; }
+    .hero-title .the { font-size: 0.38em; color: var(--text-muted); letter-spacing: 0.08em; }
+    .hero-title .highlight { color: var(--accent-lime); display: block; }
+    .hero-subtitle { margin-top: 1.5rem; color: var(--text-muted); font-size: 1rem; line-height: 1.7; max-width: 480px; }
+    .hero-meta { display: flex; gap: 2rem; margin-top: 2rem; flex-wrap: wrap; }
+    .hero-meta-item { display: flex; flex-direction: column; gap: 0.2rem; }
+    .hero-meta-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--text-muted); }
+    .hero-meta-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--accent-lime); }
+    .hero-actions { display: flex; gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap; }
+
+    /* Video mute toggle */
+    .video-toggle {
+      position: absolute; bottom: 2rem; left: 2.5rem; z-index: 3;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      color: var(--text-muted); padding: 0.45rem 0.9rem; border-radius: 20px;
+      font-size: 0.75rem; cursor: pointer; letter-spacing: 0.06em;
+      display: flex; align-items: center; gap: 0.4rem; transition: all 0.2s;
+      backdrop-filter: blur(8px);
+    }
+    .video-toggle:hover { background: rgba(184,212,50,0.12); color: var(--accent-lime); border-color: var(--border); }
+
+    /* ── BUTTONS ── */
+    .btn-primary { background: var(--accent-lime); color: var(--bg-dark); padding: 0.9rem 2.2rem; border-radius: var(--radius); font-weight: 700; font-size: 0.95rem; text-decoration: none; letter-spacing: 0.06em; text-transform: uppercase; transition: all 0.2s; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; }
+    .btn-primary:hover { background: var(--accent-gold); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(184,212,50,0.3); }
+    .btn-outline { background: transparent; color: var(--text-white); padding: 0.9rem 2.2rem; border-radius: var(--radius); font-weight: 600; font-size: 0.95rem; text-decoration: none; letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.25); cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
+    .btn-outline:hover { border-color: var(--accent-lime); color: var(--accent-lime); }
+
+    /* ── TICKET CARD ── */
+    .ticket-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; position: relative; overflow: hidden; }
+    .ticket-card::before { content: ''; position: absolute; top: -60px; right: -60px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(184,212,50,0.12) 0%, transparent 70%); pointer-events: none; }
+    .ticket-card h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-lime); margin-bottom: 1.5rem; }
+    .ticket-options { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+    .ticket-opt { display: flex; align-items: center; justify-content: space-between; background: var(--bg-mid); border: 1px solid transparent; border-radius: var(--radius); padding: 1rem 1.25rem; cursor: pointer; transition: all 0.2s; }
+    .ticket-opt.selected, .ticket-opt:hover { border-color: var(--accent-lime); }
+    .ticket-opt.selected { background: rgba(184,212,50,0.08); }
+    .ticket-opt input[type=radio] { display: none; }
+    .ticket-opt-label { font-weight: 600; font-size: 0.95rem; }
+    .ticket-opt-sublabel { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
+    .ticket-opt-price { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--accent-lime); }
+    .ticket-opt-price.free { color: var(--accent-gold); }
+    .ticket-form-field { margin-bottom: 1rem; }
+    .ticket-form-field label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); display: block; margin-bottom: 0.4rem; }
+    .ticket-form-field input { width: 100%; background: var(--bg-mid); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius); padding: 0.75rem 1rem; color: var(--text-white); font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+    .ticket-form-field input:focus { border-color: var(--accent-lime); }
+    .mpesa-note { display: flex; align-items: center; gap: 0.5rem; background: rgba(58,125,48,0.18); border: 1px solid rgba(58,125,48,0.35); border-radius: var(--radius); padding: 0.75rem 1rem; font-size: 0.8rem; color: #90d080; margin-bottom: 1.25rem; }
+    .btn-ticket { width: 100%; background: var(--accent-lime); color: var(--bg-dark); padding: 1rem; border-radius: var(--radius); font-weight: 700; font-size: 1rem; letter-spacing: 0.06em; text-transform: uppercase; border: none; cursor: pointer; transition: all 0.2s; font-family: 'Space Grotesk', sans-serif; }
+    .btn-ticket:hover { background: var(--accent-gold); transform: translateY(-1px); }
+
+    /* ── COUNTDOWN ── */
+    .countdown-strip { background: var(--bg-card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 2.5rem; }
+    .countdown-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem; }
+    .countdown-label { font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); }
+    .countdown-digits { display: flex; gap: 1.5rem; margin-top: 0.75rem; }
+    .cd-unit { text-align: center; }
+    .cd-num { font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem; line-height: 1; color: var(--accent-lime); }
+    .cd-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); }
+    .cd-sep { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--border); line-height: 1; padding-top: 0.1rem; }
+
+    /* ── PHOTO STRIP ── */
+    .photo-strip {
+      background: var(--bg-dark);
+      padding: 3rem 0;
+      overflow: hidden;
+      position: relative;
+    }
+    .photo-strip::before, .photo-strip::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 120px; z-index: 2; pointer-events: none;
+    }
+    .photo-strip::before { left: 0; background: linear-gradient(to right, var(--bg-dark), transparent); }
+    .photo-strip::after  { right: 0; background: linear-gradient(to left, var(--bg-dark), transparent); }
+    .photo-strip-label {
+      text-align: center; margin-bottom: 1.5rem;
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.2em;
+      color: var(--text-muted);
+    }
+    .photo-track {
+      display: flex; gap: 1rem;
+      animation: scroll-photos 40s linear infinite;
+      width: max-content;
+    }
+    .photo-track:hover { animation-play-state: paused; }
+    @keyframes scroll-photos {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    .photo-item {
+      width: 280px; height: 190px; flex-shrink: 0;
+      border-radius: 10px; overflow: hidden;
+      position: relative;
+    }
+    .photo-item img {
+      width: 100%; height: 100%; object-fit: cover;
+      filter: brightness(0.75) saturate(1.2);
+      transition: filter 0.3s, transform 0.4s;
+    }
+    .photo-item:hover img { filter: brightness(0.9) saturate(1.4); transform: scale(1.04); }
+    /* lime tint on hover */
+    .photo-item::after {
+      content: ''; position: absolute; inset: 0; border-radius: 10px;
+      background: rgba(184,212,50,0); transition: background 0.3s;
+      pointer-events: none;
+    }
+    .photo-item:hover::after { background: rgba(184,212,50,0.06); }
+
+    /* ── PARALLAX BREAK ── */
+    .parallax-break {
+      position: relative; height: 480px; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .parallax-bg {
+      position: absolute; inset: -10%;
+      background-attachment: fixed;
+      background-size: cover; background-position: center;
+      filter: brightness(0.35) saturate(1.3);
+    }
+    .parallax-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, rgba(13,31,15,0.6) 0%, rgba(13,31,15,0.2) 50%, rgba(13,31,15,0.7) 100%);
+    }
+    .parallax-content {
+      position: relative; z-index: 2; text-align: center; padding: 2rem;
+    }
+    .parallax-content .big-quote {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      line-height: 1; color: var(--text-white);
+      text-shadow: 0 2px 24px rgba(0,0,0,0.5);
+      margin-bottom: 1rem;
+    }
+    .parallax-content .big-quote em { color: var(--accent-lime); font-style: normal; }
+    .parallax-content p { color: rgba(245,245,240,0.7); font-size: 1rem; max-width: 480px; margin: 0 auto; line-height: 1.7; }
+
+    /* ── SECTIONS ── */
+    section { padding: 6rem 2.5rem; }
+    .section-inner { max-width: 1200px; margin: 0 auto; }
+    .section-eyebrow { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.18em; color: var(--accent-lime); font-weight: 600; display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
+    .section-eyebrow::before { content: ''; display: block; width: 24px; height: 2px; background: var(--accent-lime); }
+    .section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1; margin-bottom: 1rem; }
+    .section-sub { color: var(--text-muted); max-width: 560px; line-height: 1.7; }
+
+    /* ── SCHEDULE ── */
+    #schedule { background: var(--bg-mid); }
+    .schedule-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
+    .sched-card {
+      border-radius: 12px; padding: 1.5rem; position: relative; overflow: hidden;
+      border: 1px solid var(--border); transition: transform 0.2s, border-color 0.2s;
+    }
+    /* image behind each card */
+    .sched-card-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background-size: cover; background-position: center;
+      filter: brightness(0.18) saturate(1.2);
+      transition: filter 0.35s;
+    }
+    .sched-card:hover .sched-card-bg { filter: brightness(0.28) saturate(1.3); }
+    .sched-card:hover { transform: translateY(-3px); border-color: var(--accent-lime); }
+    .sched-card > *:not(.sched-card-bg) { position: relative; z-index: 1; }
+    .sched-time { display: inline-block; background: var(--accent-lime); color: var(--bg-dark); font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.8rem; padding: 0.25rem 0.75rem; border-radius: 4px; margin-bottom: 0.75rem; }
+    .sched-card h4 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.05rem; margin-bottom: 0.5rem; }
+    .sched-card p { color: var(--text-muted); font-size: 0.875rem; line-height: 1.6; }
+    .sched-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+
+    /* ── ACTIVITIES WITH IMAGE BG ── */
+    #activities { background: var(--bg-dark); }
+    .activities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.25rem; margin-top: 3rem; }
+    .act-card {
+      border-radius: 12px; padding: 1.75rem;
+      display: flex; flex-direction: column; gap: 0.75rem;
+      border: 1px solid var(--border); transition: all 0.25s;
+      position: relative; overflow: hidden; min-height: 200px;
+    }
+    .act-card-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background-size: cover; background-position: center;
+      filter: brightness(0.15) saturate(1.1);
+      transition: filter 0.35s, transform 0.4s;
+    }
+    .act-card:hover .act-card-bg { filter: brightness(0.3) saturate(1.4); transform: scale(1.05); }
+    .act-card:hover { border-color: var(--accent-lime); }
+    .act-card > *:not(.act-card-bg) { position: relative; z-index: 1; }
+    .act-icon { font-size: 2.2rem; }
+    .act-card h4 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem; }
+    .act-card p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; }
+
+    /* ── VENUE ── */
+    #venue { background: var(--bg-mid); }
+    .venue-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; margin-top: 3rem; }
+    .venue-map { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; height: 320px; overflow: hidden; }
+    .venue-map iframe { width: 100%; height: 100%; border: none; border-radius: 16px; filter: invert(0.9) hue-rotate(145deg); }
+    .venue-info { display: flex; flex-direction: column; gap: 1.5rem; }
+    .venue-detail { display: flex; gap: 1rem; align-items: flex-start; }
+    .venue-detail-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .venue-detail-text h5 { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .venue-detail-text p { color: var(--text-muted); font-size: 0.875rem; line-height: 1.6; }
+
+    /* ── PARTNERS ── */
+    #partners { background: var(--bg-dark); }
+    .partners-grid { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; margin-top: 3rem; }
+    .partner-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2.5rem; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; min-width: 160px; }
+    .partner-card .partner-logo { font-size: 2.2rem; }
+    .partner-card .partner-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.85rem; text-align: center; }
+    .partner-card .partner-role { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-lime); }
+
+    /* ── TICKET SECTION ── */
+    #tickets { background: var(--bg-mid); }
+    .tickets-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; margin-top: 3rem; }
+    .ticket-info { display: flex; flex-direction: column; gap: 1.5rem; }
+    .ticket-feature { display: flex; gap: 1rem; }
+    .ticket-feature-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 0.15rem; }
+    .ticket-feature h5 { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.2rem; }
+    .ticket-feature p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; }
+
+    /* ── MODAL ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.8); backdrop-filter: blur(6px); align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; max-width: 480px; width: 90%; position: relative; }
+    .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+    .modal h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .modal p.sub { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem; }
+    .stk-prompt { text-align: center; padding: 2rem; background: var(--bg-mid); border-radius: var(--radius); margin: 1rem 0; }
+    .stk-prompt .phone-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+    .stk-prompt p { color: var(--text-muted); font-size: 0.875rem; line-height: 1.6; }
+    .stk-prompt strong { color: var(--accent-lime); }
+    .status-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.9rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .status-badge.pending { background: rgba(232,200,64,0.15); color: var(--accent-gold); }
+    .status-badge.success { background: rgba(58,125,48,0.2); color: #7dca6a; }
+    .status-badge.error { background: rgba(200,60,60,0.2); color: #f07070; }
+    .pulse { animation: pulse 1.4s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+    /* ── FOOTER ── */
+    footer { background: var(--bg-card); border-top: 1px solid var(--border); padding: 3rem 2.5rem; text-align: center; }
+    footer .footer-inner { max-width: 1200px; margin: 0 auto; }
+    footer .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--accent-lime); margin-bottom: 0.5rem; }
+    footer p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.25rem; }
+    footer .footer-links { display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem; flex-wrap: wrap; }
+    footer .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 0.8rem; transition: color 0.2s; }
+    footer .footer-links a:hover { color: var(--accent-lime); }
+
+    /* ── TOAST ── */
+    .toast { position: fixed; bottom: 2rem; right: 2rem; z-index: 300; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.5rem; font-size: 0.875rem; max-width: 340px; transform: translateY(120px); opacity: 0; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none; }
+    .toast.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+    .toast.success { border-color: rgba(58,125,48,0.5); }
+    .toast.error { border-color: rgba(200,60,60,0.4); }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr; }
+      .tickets-layout { grid-template-columns: 1fr; }
+      .venue-grid { grid-template-columns: 1fr; }
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { display: none; }
+      .menu-toggle { display: block; }
+      .parallax-bg { background-attachment: scroll; }
+    }
+    @media (max-width: 600px) {
+      .hero-title { font-size: 5rem; }
+      section { padding: 4rem 1.5rem; }
+      .countdown-strip { padding: 2rem 1.5rem; }
+      .countdown-inner { flex-direction: column; gap: 1rem; }
+      .photo-item { width: 220px; height: 150px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .photo-track { animation: none; }
+      .reveal { opacity: 1; transform: none; }
+      .parallax-bg { background-attachment: scroll; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div style="width:42px;height:42px;background:var(--accent-lime);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">🏃</div>
+    <div class="nav-logo-text">FITNESS FESTIVAL <span>Powered by Eastern Produce Kenya</span></div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#schedule">Schedule</a></li>
+    <li><a href="#activities">Activities</a></li>
+    <li><a href="#venue">Venue</a></li>
+    <li><a href="#partners">Partners</a></li>
+  </ul>
+  <a href="#tickets" class="nav-cta">Get Tickets</a>
+  <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div id="mobileMenu" style="display:none;position:fixed;top:68px;left:0;right:0;z-index:99;background:var(--bg-card);border-bottom:1px solid var(--border);padding:1.5rem;">
+  <ul style="list-style:none;display:flex;flex-direction:column;gap:1.25rem;">
+    <li><a href="#schedule" style="color:var(--text-white);text-decoration:none;font-size:1rem;" onclick="toggleMenu()">Schedule</a></li>
+    <li><a href="#activities" style="color:var(--text-white);text-decoration:none;font-size:1rem;" onclick="toggleMenu()">Activities</a></li>
+    <li><a href="#venue" style="color:var(--text-white);text-decoration:none;font-size:1rem;" onclick="toggleMenu()">Venue</a></li>
+    <li><a href="#partners" style="color:var(--text-white);text-decoration:none;font-size:1rem;" onclick="toggleMenu()">Partners</a></li>
+    <li><a href="#tickets" class="btn-primary" onclick="toggleMenu()">Get Tickets</a></li>
+  </ul>
+</div>
+
+<!-- ═══════ HERO WITH VIDEO ═══════ -->
+<section id="hero">
+  <!-- Video background — autoplay, muted, loops -->
+  <div class="hero-video-wrap">
+    <video id="heroBgVideo" autoplay muted loop playsinline preload="none"
+      poster="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1600&q=80">
+      <!-- Royalty-free fitness videos from Pexels CDN -->
+      <source src="https://videos.pexels.com/video-files/4761438/4761438-uhd_2560_1440_25fps.mp4" type="video/mp4"/>
+      <source src="https://videos.pexels.com/video-files/3209828/3209828-uhd_2560_1440_25fps.mp4" type="video/mp4"/>
+    </video>
+  </div>
+  <div class="hero-overlay"></div>
+
+  <div class="hero-grid">
+    <div class="hero-content">
+      <div class="hero-eyebrow">Official Event 2026</div>
+      <h1 class="hero-title">
+        <span class="the">THE</span>
+        <span class="highlight">FITNESS</span>
+        FESTIVAL
+      </h1>
+      <p class="hero-subtitle">Nairobi's premier fitness celebration — a day packed with energy, community, wellness challenges, and movement for every body.</p>
+      <div class="hero-meta">
+        <div class="hero-meta-item"><span class="hero-meta-label">Date</span><span class="hero-meta-value">08 August 2026</span></div>
+        <div class="hero-meta-item"><span class="hero-meta-label">Venue</span><span class="hero-meta-value">Nandi Bears Club</span></div>
+        <div class="hero-meta-item"><span class="hero-meta-label">Starts</span><span class="hero-meta-value">7:00 AM</span></div>
+      </div>
+      <div class="hero-actions">
+        <a href="#tickets" class="btn-primary">🎟 Get Your Ticket</a>
+        <a href="#schedule" class="btn-outline">View Schedule</a>
+      </div>
+    </div>
+
+    <!-- Ticket widget -->
+    <div class="ticket-card">
+      <h3>🎟 Secure Your Spot</h3>
+      <div class="ticket-options" id="ticketOptions">
+        <label class="ticket-opt selected" onclick="selectTicket(this,'standard','KSh 1,000',1000)">
+          <input type="radio" name="ticket" value="standard" checked/>
+          <div><div class="ticket-opt-label">Standard Entry</div><div class="ticket-opt-sublabel">Full day access to all activities</div></div>
+          <div class="ticket-opt-price">KSh 1,000</div>
+        </label>
+        <label class="ticket-opt" onclick="selectTicket(this,'disabled','FREE',0)">
+          <input type="radio" name="ticket" value="disabled"/>
+          <div><div class="ticket-opt-label">Disabled Access</div><div class="ticket-opt-sublabel">Complimentary — valid ID required</div></div>
+          <div class="ticket-opt-price free">FREE</div>
+        </label>
+      </div>
+      <div class="ticket-form-field"><label>Full Name</label><input type="text" id="buyerName" placeholder="John Doe"/></div>
+      <div class="ticket-form-field"><label>M-Pesa Phone Number</label><input type="tel" id="buyerPhone" placeholder="0712 345 678"/></div>
+      <div class="ticket-form-field"><label>Email Address</label><input type="email" id="buyerEmail" placeholder="john@email.com"/></div>
+      <div class="mpesa-note">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        An M-Pesa STK push will be sent to your phone to complete payment.
+      </div>
+      <button class="btn-ticket" onclick="initiatePurchase()">Pay via M-Pesa →</button>
+    </div>
+  </div>
+
+  <!-- Mute / unmute control -->
+  <button class="video-toggle" id="videoToggle" onclick="toggleVideoAudio()">
+    <span id="videoToggleIcon">🔇</span> <span id="videoToggleLabel">Unmute video</span>
+  </button>
+</section>
+
+<!-- COUNTDOWN -->
+<div class="countdown-strip">
+  <div class="countdown-inner">
+    <div>
+      <div class="countdown-label">Event Countdown</div>
+      <div class="countdown-digits">
+        <div class="cd-unit"><div class="cd-num" id="cd-days">00</div><div class="cd-label">Days</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit"><div class="cd-num" id="cd-hours">00</div><div class="cd-label">Hours</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit"><div class="cd-num" id="cd-mins">00</div><div class="cd-label">Mins</div></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit"><div class="cd-num" id="cd-secs">00</div><div class="cd-label">Secs</div></div>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.14em;color:var(--text-muted);">August 08, 2026 · Nandi Bears Club</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--accent-lime);margin-top:0.25rem;">NAIROBI, KENYA</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PHOTO STRIP ═══════ -->
+<div class="photo-strip">
+  <div class="photo-strip-label">A glimpse of what's in store</div>
+  <div class="photo-track" id="photoTrack">
+    <!-- duplicated for infinite loop effect -->
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=560&q=75" alt="Running" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=560&q=75" alt="Group fitness" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1534258936925-c58bed479fcb?w=560&q=75" alt="Stretching" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=560&q=75" alt="Aerobics" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1547919307-1ecb10702e6f?w=560&q=75" alt="Health check" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=560&q=75" alt="Nutrition" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=560&q=75" alt="Yoga" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=560&q=75" alt="Strength training" loading="lazy"/></div>
+    <!-- duplicate for seamless loop -->
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=560&q=75" alt="Running" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=560&q=75" alt="Group fitness" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1534258936925-c58bed479fcb?w=560&q=75" alt="Stretching" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=560&q=75" alt="Aerobics" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1547919307-1ecb10702e6f?w=560&q=75" alt="Health check" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=560&q=75" alt="Nutrition" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=560&q=75" alt="Yoga" loading="lazy"/></div>
+    <div class="photo-item"><img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=560&q=75" alt="Strength training" loading="lazy"/></div>
+  </div>
+</div>
+
+<!-- SCHEDULE -->
+<section id="schedule">
+  <div class="section-inner">
+    <div class="section-eyebrow reveal">Event Schedule</div>
+    <h2 class="section-title reveal">WHAT'S ON</h2>
+    <p class="section-sub reveal">A full day of fitness, wellness, and community — from sunrise to midday.</p>
+    <div class="schedule-grid">
+      <div class="sched-card reveal">
+        <div class="sched-card-bg" style="background-image:url('https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&q=70')"></div>
+        <div class="sched-icon">🏃‍♂️</div>
+        <div class="sched-time">7:00 AM</div>
+        <h4>5KM Fun Run</h4>
+        <p>Kick off the day with an energising community run. All fitness levels welcome — walk, jog, or race!</p>
+      </div>
+      <div class="sched-card reveal">
+        <div class="sched-card-bg" style="background-image:url('https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=70')"></div>
+        <div class="sched-icon">🦵</div>
+        <div class="sched-time">8:00 AM</div>
+        <h4>Physiotherapy Activities</h4>
+        <p>Expert-led mobility and recovery sessions. Understand your body, prevent injury, and move better.</p>
+      </div>
+      <div class="sched-card reveal">
+        <div class="sched-card-bg" style="background-image:url('https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=70')"></div>
+        <div class="sched-icon">💃</div>
+        <div class="sched-time">9:00 AM</div>
+        <h4>Aerobics & Zumba</h4>
+        <p>High-energy cardio dance classes led by top instructors. Get your heart pumping and your hips moving!</p>
+      </div>
+      <div class="sched-card reveal">
+        <div class="sched-card-bg" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=70')"></div>
+        <div class="sched-icon">💪</div>
+        <div class="sched-time">10:30 AM</div>
+        <h4>Muscle Flexing & Fitness Challenge</h4>
+        <p>Show your strength! Friendly competitions, strength circuits, and a crowd-favourite flex-off.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ PARALLAX IMAGE BREAK ═══════ -->
+<div class="parallax-break">
+  <div class="parallax-bg" style="background-image:url('https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1800&q=80')"></div>
+  <div class="parallax-overlay"></div>
+  <div class="parallax-content reveal">
+    <p class="big-quote">MOVE. <em>SWEAT.</em> CELEBRATE.</p>
+    <p>One morning. One community. One Nairobi.</p>
+  </div>
+</div>
+
+<!-- ACTIVITIES -->
+<section id="activities">
+  <div class="section-inner">
+    <div class="section-eyebrow reveal">All-Day Activities</div>
+    <h2 class="section-title reveal">BEYOND THE SCHEDULE</h2>
+    <p class="section-sub reveal">Running all day throughout the festival grounds — free for all ticket holders.</p>
+    <div class="activities-grid">
+      <div class="act-card reveal">
+        <div class="act-card-bg" style="background-image:url('https://images.unsplash.com/photo-1534258936925-c58bed479fcb?w=500&q=70')"></div>
+        <div class="act-icon">💪</div>
+        <h4>Muscle Flexing</h4>
+        <p>Drop-in bodyweight challenges and resistance training stations throughout the day.</p>
+      </div>
+      <div class="act-card reveal">
+        <div class="act-card-bg" style="background-image:url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&q=70')"></div>
+        <div class="act-icon">🏆</div>
+        <h4>Fitness Challenge</h4>
+        <p>Test yourself against timed fitness circuits and earn bragging rights on the leaderboard.</p>
+      </div>
+      <div class="act-card reveal">
+        <div class="act-card-bg" style="background-image:url('https://images.unsplash.com/photo-1547919307-1ecb10702e6f?w=500&q=70')"></div>
+        <div class="act-icon">⚖️</div>
+        <h4>BMI Health Checks</h4>
+        <p>Free health screening by certified professionals. Know your numbers, take control of your health.</p>
+      </div>
+      <div class="act-card reveal">
+        <div class="act-card-bg" style="background-image:url('https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=500&q=70')"></div>
+        <div class="act-icon">🥗</div>
+        <h4>Nutritional Talks</h4>
+        <p>Bite-sized sessions from registered nutritionists on fueling performance and everyday wellbeing.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VENUE -->
+<section id="venue">
+  <div class="section-inner">
+    <div class="section-eyebrow reveal">Location</div>
+    <h2 class="section-title reveal">FIND US</h2>
+    <div class="venue-grid">
+      <div class="venue-info reveal">
+        <div class="venue-detail">
+          <div class="venue-detail-icon">📍</div>
+          <div class="venue-detail-text"><h5>Nandi Bears Club</h5><p>Nairobi, Kenya<br/>Easy access from the CBD — ample parking available on site.</p></div>
+        </div>
+        <div class="venue-detail">
+          <div class="venue-detail-icon">📅</div>
+          <div class="venue-detail-text"><h5>Saturday, 08 August 2026</h5><p>Gates open at 6:30 AM · Activities begin 7:00 AM · Programme ends ~12:00 PM</p></div>
+        </div>
+        <div class="venue-detail">
+          <div class="venue-detail-icon">👕</div>
+          <div class="venue-detail-text"><h5>What to bring</h5><p>Your ticket confirmation, comfortable workout clothes, water bottle, and a smile.</p></div>
+        </div>
+        <a href="https://maps.google.com/?q=Nandi+Bears+Club+Nairobi" target="_blank" class="btn-outline" style="display:inline-flex;margin-top:0.5rem;">🗺 Open in Google Maps</a>
+      </div>
+      <div class="venue-map reveal">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15955.264093534837!2d36.7954!3d-1.2921!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182f17a791e9ce1d%3A0x4cf4c1e79a43bef1!2sNairobi%2C+Kenya!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus" allowfullscreen loading="lazy"></iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKETS -->
+<section id="tickets">
+  <div class="section-inner">
+    <div class="section-eyebrow reveal">Ticketing</div>
+    <h2 class="section-title reveal">GET YOUR TICKET</h2>
+    <div class="tickets-layout">
+      <div class="ticket-info reveal">
+        <p class="section-sub">Secure your spot at The Fitness Festival 2026. Pay instantly with M-Pesa — no queues, no cash.</p>
+        <div class="ticket-feature"><div class="ticket-feature-icon">📲</div><div><h5>M-Pesa STK Push</h5><p>Enter your Safaricom number and receive an instant payment prompt on your phone.</p></div></div>
+        <div class="ticket-feature"><div class="ticket-feature-icon">✉️</div><div><h5>Instant Confirmation</h5><p>Receive your e-ticket via email immediately after payment is confirmed.</p></div></div>
+        <div class="ticket-feature"><div class="ticket-feature-icon">♿</div><div><h5>Free Disabled Access</h5><p>Complimentary entry for persons with disabilities. Present valid documentation at the gate.</p></div></div>
+        <div class="ticket-feature"><div class="ticket-feature-icon">🔒</div><div><h5>Secure & Instant</h5><p>All transactions processed via Safaricom's official M-Pesa Daraja API. Safe and verified.</p></div></div>
+      </div>
+      <div class="ticket-card reveal">
+        <h3>🎟 Purchase Ticket</h3>
+        <div class="ticket-options">
+          <label class="ticket-opt selected" onclick="selectTicket(this,'standard','KSh 1,000',1000)">
+            <input type="radio" name="ticket2" value="standard" checked/>
+            <div><div class="ticket-opt-label">Standard Entry</div><div class="ticket-opt-sublabel">Full day — all activities</div></div>
+            <div class="ticket-opt-price">KSh 1,000</div>
+          </label>
+          <label class="ticket-opt" onclick="selectTicket(this,'disabled','FREE',0)">
+            <input type="radio" name="ticket2" value="disabled"/>
+            <div><div class="ticket-opt-label">Disabled Access</div><div class="ticket-opt-sublabel">Complimentary ticket</div></div>
+            <div class="ticket-opt-price free">FREE</div>
+          </label>
+        </div>
+        <div class="ticket-form-field"><label>Full Name</label><input type="text" id="buyerName2" placeholder="Your full name"/></div>
+        <div class="ticket-form-field"><label>M-Pesa Phone Number</label><input type="tel" id="buyerPhone2" placeholder="0712 345 678"/></div>
+        <div class="ticket-form-field"><label>Email Address</label><input type="email" id="buyerEmail2" placeholder="your@email.com"/></div>
+        <div class="mpesa-note">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          STK push sent to your Safaricom number to complete payment securely.
+        </div>
+        <button class="btn-ticket" onclick="initiatePurchase2()">Pay via M-Pesa →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PARTNERS -->
+<section id="partners">
+  <div class="section-inner">
+    <div class="section-eyebrow reveal">Our Partners & Sponsors</div>
+    <h2 class="section-title reveal">MADE POSSIBLE BY</h2>
+    <div class="partners-grid reveal">
+      <div class="partner-card"><div class="partner-logo">🏥</div><div class="partner-name">Equity Afya</div><div class="partner-role">Health Partner</div></div>
+      <div class="partner-card"><div class="partner-logo">🏛️</div><div class="partner-name">Government Partner</div><div class="partner-role">Govt. Partner</div></div>
+      <div class="partner-card"><div class="partner-logo">🌿</div><div class="partner-name">Eastern Produce Kenya</div><div class="partner-role">Title Sponsor</div></div>
+      <div class="partner-card"><div class="partner-logo">⭐</div><div class="partner-name">Starfit</div><div class="partner-role">Fitness Partner</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">FITNESS FESTIVAL 2026</div>
+    <p>Powered by Eastern Produce Kenya Limited</p>
+    <p style="margin-top:0.25rem;">08 August 2026 · Nandi Bears Club · Nairobi, Kenya</p>
+    <div class="footer-links">
+      <a href="#schedule">Schedule</a><a href="#tickets">Tickets</a>
+      <a href="#venue">Venue</a><a href="admin/index.html">Admin</a>
+    </div>
+    <p style="margin-top:2rem;font-size:0.75rem;color:rgba(138,158,130,0.5);">© 2026 Eastern Produce Kenya Limited. All rights reserved.</p>
+  </div>
+</footer>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="payModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>Complete Your Payment</h3>
+    <p class="sub">Waiting for M-Pesa authorisation...</p>
+    <div class="stk-prompt">
+      <div class="phone-icon">📲</div>
+      <p>An STK push has been sent to<br/><strong id="modalPhone">your phone</strong>.</p><br/>
+      <p>Enter your <strong>M-Pesa PIN</strong> to complete payment of <strong id="modalAmt">KSh 1,000</strong>.</p><br/>
+      <span class="status-badge pending pulse" id="payStatus">⏳ Awaiting payment...</span>
+    </div>
+    <button class="btn-ticket" style="margin-top:1.25rem;" onclick="checkPaymentStatus()" id="checkBtn">Check Payment Status</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── State
+  let selectedTicket = { type:'standard', label:'KSh 1,000', amount:1000 };
+  let currentOrderId = null;
+
+  // ── Video toggle
+  function toggleVideoAudio() {
+    const v = document.getElementById('heroBgVideo');
+    v.muted = !v.muted;
+    document.getElementById('videoToggleIcon').textContent = v.muted ? '🔇' : '🔊';
+    document.getElementById('videoToggleLabel').textContent = v.muted ? 'Unmute video' : 'Mute video';
+  }
+
+  // ── Nav toggle
+  function toggleMenu() {
+    const m = document.getElementById('mobileMenu');
+    m.style.display = m.style.display === 'none' ? 'block' : 'none';
+  }
+
+  // ── Ticket selection
+  function selectTicket(el, type, label, amount) {
+    document.querySelectorAll('.ticket-opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedTicket = { type, label, amount };
+  }
+
+  // ── Countdown
+  function updateCountdown() {
+    const target = new Date('2026-08-08T07:00:00+03:00');
+    let diff = Math.max(0, target - new Date());
+    const days  = Math.floor(diff / 86400000); diff -= days*86400000;
+    const hours = Math.floor(diff / 3600000);  diff -= hours*3600000;
+    const mins  = Math.floor(diff / 60000);    diff -= mins*60000;
+    const secs  = Math.floor(diff / 1000);
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('cd-days').textContent  = pad(days);
+    document.getElementById('cd-hours').textContent = pad(hours);
+    document.getElementById('cd-mins').textContent  = pad(mins);
+    document.getElementById('cd-secs').textContent  = pad(secs);
+  }
+  updateCountdown(); setInterval(updateCountdown,1000);
+
+  // ── Scroll reveal
+  const revealEls = document.querySelectorAll('.reveal');
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+  }, { threshold: 0.12, rootMargin:'0px 0px -40px 0px' });
+  revealEls.forEach(el => revealObs.observe(el));
+
+  // ── Toast
+  function showToast(msg, type='info') {
+    const t = document.getElementById('toast');
+    t.className = `toast ${type}`; t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 4000);
+  }
+
+  // ── Validate inputs
+  function validateForm(nameId, phoneId, emailId) {
+    const name  = document.getElementById(nameId).value.trim();
+    const phone = document.getElementById(phoneId).value.trim();
+    const email = document.getElementById(emailId).value.trim();
+    if (!name)  { showToast('Please enter your full name.','error'); return null; }
+    if (!/^(07|01|2547|2541)\d{8,}$/.test(phone.replace(/\s/g,''))) { showToast('Enter a valid Safaricom number.','error'); return null; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Please enter a valid email address.','error'); return null; }
+    return { name, phone: phone.replace(/\s/g,''), email };
+  }
+
+  async function initiatePurchase()  { const d=validateForm('buyerName','buyerPhone','buyerEmail');  if(d) await doCheckout(d); }
+  async function initiatePurchase2() { const d=validateForm('buyerName2','buyerPhone2','buyerEmail2'); if(d) await doCheckout(d); }
+
+  async function doCheckout(data) {
+    if (selectedTicket.amount === 0) {
+      try {
+        const res = await fetch('/api/register-free',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...data,ticketType:selectedTicket.type}) });
+        const json = await res.json();
+        showToast(json.success ? '✅ Free ticket sent to your email!' : json.message||'Registration failed.', json.success?'success':'error');
+      } catch(e) { showToast('Network error. Try again.','error'); }
+      return;
+    }
+    try {
+      showToast('Initiating M-Pesa payment...','info');
+      const res = await fetch('/api/mpesa/stk-push',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...data,amount:selectedTicket.amount,ticketType:selectedTicket.type}) });
+      const json = await res.json();
+      if (json.success) { currentOrderId=json.orderId; openPayModal(data.phone, selectedTicket.label); }
+      else showToast(json.message||'Could not initiate payment.','error');
+    } catch(e) { showToast('Network error. Try again.','error'); }
+  }
+
+  function openPayModal(phone,amt) {
+    document.getElementById('modalPhone').textContent = phone;
+    document.getElementById('modalAmt').textContent = amt;
+    document.getElementById('payStatus').className = 'status-badge pending pulse';
+    document.getElementById('payStatus').textContent = '⏳ Awaiting payment...';
+    document.getElementById('checkBtn').textContent = 'Check Payment Status';
+    document.getElementById('payModal').classList.add('open');
+  }
+  function closeModal() { document.getElementById('payModal').classList.remove('open'); currentOrderId=null; }
+
+  async function checkPaymentStatus() {
+    if (!currentOrderId) return;
+    document.getElementById('checkBtn').textContent = 'Checking...';
+    try {
+      const res = await fetch(`/api/mpesa/status/${currentOrderId}`);
+      const json = await res.json();
+      const badge = document.getElementById('payStatus');
+      if (json.status==='completed') { badge.className='status-badge success'; badge.textContent='✅ Payment confirmed!'; document.getElementById('checkBtn').textContent='Done ✓'; showToast('🎉 Confirmed! Check your email for your ticket.','success'); setTimeout(closeModal,3000); }
+      else if (json.status==='failed') { badge.className='status-badge error'; badge.textContent='❌ Payment failed'; document.getElementById('checkBtn').textContent='Retry'; showToast('Payment not completed. Please try again.','error'); }
+      else { badge.className='status-badge pending pulse'; badge.textContent='⏳ Still waiting...'; document.getElementById('checkBtn').textContent='Check Again'; }
+    } catch(e) { showToast('Could not check status.','error'); document.getElementById('checkBtn').textContent='Check Payment Status'; }
+  }
+  setInterval(()=>{ if(currentOrderId&&document.getElementById('payModal').classList.contains('open')) checkPaymentStatus(); },5000);
+</script>
+</body>
+</html>

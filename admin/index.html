@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — Fitness Festival 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1f0f; --sidebar: #0b1a0d; --card: #1a2e1c; --mid: #142418;
+      --lime: #b8d432; --gold: #e8c840; --green: #3a7d30;
+      --white: #f5f5f0; --muted: #8a9e82; --border: rgba(184,212,50,0.18);
+      --red: #e05555; --radius: 8px;
+    }
+    body { background: var(--bg); color: var(--white); font-family: 'Inter', sans-serif; display: flex; min-height: 100vh; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px; flex-shrink: 0; background: var(--sidebar);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      padding: 1.5rem 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    }
+    .sidebar-logo { padding: 0 1.5rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .sidebar-logo-mark { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--lime); line-height: 1; }
+    .sidebar-logo-sub { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-top: 0.2rem; }
+    .sidebar-badge { display: inline-block; background: var(--lime); color: var(--bg); font-size: 0.6rem; font-weight: 700; padding: 0.15rem 0.4rem; border-radius: 3px; letter-spacing: 0.08em; margin-left: 0.4rem; }
+    nav.sidebar-nav { padding: 1.25rem 0.75rem; flex: 1; }
+    .nav-section-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); padding: 0 0.75rem; margin: 1rem 0 0.4rem; }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.65rem 0.75rem; border-radius: var(--radius);
+      color: var(--muted); text-decoration: none; font-size: 0.875rem;
+      font-weight: 500; cursor: pointer; transition: all 0.18s;
+      border: none; background: none; width: 100%; text-align: left;
+    }
+    .nav-item:hover { background: rgba(184,212,50,0.07); color: var(--white); }
+    .nav-item.active { background: rgba(184,212,50,0.13); color: var(--lime); }
+    .nav-item .icon { font-size: 1rem; width: 20px; }
+    .sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--muted); }
+
+    /* ── MAIN ── */
+    .main { flex: 1; display: flex; flex-direction: column; min-height: 100vh; overflow: hidden; }
+    .topbar {
+      background: var(--sidebar); border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700; }
+    .topbar .right { display: flex; gap: 1rem; align-items: center; }
+    .refresh-btn {
+      background: rgba(184,212,50,0.1); border: 1px solid var(--border);
+      color: var(--lime); padding: 0.45rem 1rem; border-radius: var(--radius);
+      font-size: 0.8rem; font-weight: 600; cursor: pointer; letter-spacing: 0.06em;
+      transition: all 0.2s;
+    }
+    .refresh-btn:hover { background: var(--lime); color: var(--bg); }
+    .export-btn {
+      background: var(--lime); color: var(--bg); padding: 0.45rem 1rem;
+      border-radius: var(--radius); font-size: 0.8rem; font-weight: 700;
+      cursor: pointer; border: none; letter-spacing: 0.06em; transition: all 0.2s;
+    }
+    .export-btn:hover { background: var(--gold); }
+    .page-content { padding: 2rem; flex: 1; overflow-y: auto; }
+
+    /* ── PAGES ── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── STATS ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.5rem; position: relative; overflow: hidden;
+    }
+    .stat-card::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+      background: var(--lime);
+    }
+    .stat-card.revenue::after { background: var(--gold); }
+    .stat-card.free::after { background: var(--green); }
+    .stat-card.pending::after { background: #e08040; }
+    .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 0.5rem; }
+    .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; color: var(--white); line-height: 1; }
+    .stat-card.revenue .stat-value { color: var(--gold); }
+    .stat-sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.35rem; }
+    .stat-trend { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; margin-top: 0.5rem; }
+    .stat-trend.up { color: #7dca6a; }
+    .stat-trend.neutral { color: var(--muted); }
+
+    /* ── TABLE ── */
+    .table-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .table-header {
+      padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .table-header h3 { font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 700; }
+    .search-input {
+      background: var(--mid); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 0.5rem 1rem;
+      color: var(--white); font-size: 0.85rem; width: 220px; outline: none;
+    }
+    .search-input:focus { border-color: var(--lime); }
+    .search-input::placeholder { color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); padding: 0.75rem 1.5rem; text-align: left; background: var(--mid); }
+    td { padding: 1rem 1.5rem; border-top: 1px solid var(--border); font-size: 0.875rem; vertical-align: middle; }
+    tr:hover td { background: rgba(184,212,50,0.04); }
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600;
+    }
+    .badge.completed { background: rgba(58,125,48,0.2); color: #7dca6a; }
+    .badge.pending   { background: rgba(224,128,64,0.2); color: #e09050; }
+    .badge.failed    { background: rgba(224,85,85,0.2); color: #e08080; }
+    .badge.free      { background: rgba(58,125,48,0.15); color: #90d080; }
+    .ticket-id { font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: var(--lime); }
+    .table-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--muted); }
+    .pagination { display: flex; gap: 0.4rem; }
+    .page-btn { background: var(--mid); border: 1px solid var(--border); color: var(--white); width: 32px; height: 32px; border-radius: var(--radius); cursor: pointer; font-size: 0.8rem; transition: all 0.18s; }
+    .page-btn.active, .page-btn:hover { background: var(--lime); color: var(--bg); border-color: var(--lime); }
+
+    /* ── CHART (CSS bars) ── */
+    .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .chart-card h3 { font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 700; margin-bottom: 1.5rem; }
+    .bar-chart { display: flex; align-items: flex-end; gap: 0.75rem; height: 140px; }
+    .bar-group { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; flex: 1; }
+    .bar { width: 100%; background: var(--lime); border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.4s; position: relative; }
+    .bar:hover { background: var(--gold); }
+    .bar-label { font-size: 0.68rem; color: var(--muted); text-align: center; }
+    .bar-val { font-size: 0.68rem; color: var(--white); font-weight: 600; }
+
+    /* ── TWO COL ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+    @media(max-width:900px){ .two-col{grid-template-columns:1fr;} .sidebar{display:none;} }
+
+    /* ── SETTINGS PAGE ── */
+    .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+    .settings-card h3 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; margin-bottom: 1.5rem; font-size: 1rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .form-field label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); display: block; margin-bottom: 0.35rem; }
+    .form-field input, .form-field select {
+      width: 100%; background: var(--mid); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 0.65rem 1rem; color: var(--white);
+      font-size: 0.875rem; outline: none; transition: border-color 0.2s;
+    }
+    .form-field input:focus, .form-field select:focus { border-color: var(--lime); }
+    .save-btn {
+      background: var(--lime); color: var(--bg); padding: 0.65rem 1.75rem;
+      border-radius: var(--radius); font-weight: 700; font-size: 0.875rem;
+      border: none; cursor: pointer; transition: all 0.2s; margin-top: 0.5rem;
+    }
+    .save-btn:hover { background: var(--gold); }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-row label { font-size: 0.875rem; }
+    .toggle-row p { font-size: 0.78rem; color: var(--muted); }
+    .toggle { position: relative; width: 44px; height: 24px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; background: var(--mid); border-radius: 24px; cursor: pointer; transition: 0.2s; border: 1px solid var(--border); }
+    .slider::before { content: ''; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; background: var(--muted); border-radius: 50%; transition: 0.2s; }
+    input:checked + .slider { background: rgba(184,212,50,0.2); border-color: var(--lime); }
+    input:checked + .slider::before { transform: translateX(20px); background: var(--lime); }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-mark">FITNESS FESTIVAL</div>
+    <div class="sidebar-logo-sub">Admin Dashboard <span class="sidebar-badge">2026</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <button class="nav-item active" onclick="showPage('dashboard',this)">
+      <span class="icon">📊</span> Dashboard
+    </button>
+    <div class="nav-section-label">Tickets</div>
+    <button class="nav-item" onclick="showPage('sales',this)">
+      <span class="icon">🎟</span> All Sales
+    </button>
+    <button class="nav-item" onclick="showPage('checkin',this)">
+      <span class="icon">✅</span> Check-In
+    </button>
+    <div class="nav-section-label">Finance</div>
+    <button class="nav-item" onclick="showPage('revenue',this)">
+      <span class="icon">💰</span> Revenue
+    </button>
+    <button class="nav-item" onclick="showPage('mpesa',this)">
+      <span class="icon">📲</span> M-Pesa Logs
+    </button>
+    <div class="nav-section-label">Settings</div>
+    <button class="nav-item" onclick="showPage('settings',this)">
+      <span class="icon">⚙️</span> Settings
+    </button>
+    <button class="nav-item" onclick="window.open('../index.html')">
+      <span class="icon">🌐</span> View Website
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    Logged in as <strong>Admin</strong><br/>
+    Fitness Festival 2026
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <h1 id="pageTitle">Dashboard</h1>
+    <div class="right">
+      <span style="font-size:0.75rem;color:var(--muted);">Last updated: <span id="lastUpdated">—</span></span>
+      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+      <button class="export-btn" onclick="exportCSV()">↓ Export CSV</button>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-label">Total Tickets Sold</div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-sub">Standard + Free</div>
+        </div>
+        <div class="stat-card revenue">
+          <div class="stat-label">Total Revenue</div>
+          <div class="stat-value" id="stat-revenue">KSh 0</div>
+          <div class="stat-sub">Via M-Pesa</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Standard Tickets</div>
+          <div class="stat-value" id="stat-standard">0</div>
+          <div class="stat-sub">@ KSh 1,000 each</div>
+        </div>
+        <div class="stat-card free">
+          <div class="stat-label">Free / Disabled</div>
+          <div class="stat-value" id="stat-free">0</div>
+          <div class="stat-sub">Complimentary</div>
+        </div>
+        <div class="stat-card pending">
+          <div class="stat-label">Pending Payments</div>
+          <div class="stat-value" id="stat-pending">0</div>
+          <div class="stat-sub">Awaiting confirmation</div>
+        </div>
+      </div>
+
+      <!-- Sales Chart -->
+      <div class="two-col">
+        <div class="chart-card">
+          <h3>Daily Sales (Last 7 Days)</h3>
+          <div class="bar-chart" id="barChart">
+            <!-- Generated by JS -->
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Ticket Breakdown</h3>
+          <div id="ticketBreakdown" style="display:flex;flex-direction:column;gap:1rem;margin-top:0.5rem;">
+            <!-- Generated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent table -->
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Recent Transactions</h3>
+          <span style="font-size:0.8rem;color:var(--muted);">Last 10</span>
+        </div>
+        <table id="recentTable">
+          <thead><tr>
+            <th>Ticket ID</th><th>Name</th><th>Phone</th><th>Type</th><th>Amount</th><th>Status</th><th>Time</th>
+          </tr></thead>
+          <tbody id="recentBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ALL SALES PAGE -->
+    <div class="page" id="page-sales">
+      <div class="table-card">
+        <div class="table-header">
+          <h3>All Ticket Sales</h3>
+          <input class="search-input" placeholder="🔍 Search name, phone, ticket…" oninput="filterTable(this.value)"/>
+        </div>
+        <table id="salesTable">
+          <thead><tr>
+            <th>Ticket ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Type</th><th>Amount</th><th>M-Pesa Ref</th><th>Status</th><th>Date</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="salesBody"></tbody>
+        </table>
+        <div class="table-footer">
+          <span id="salesCount">0 records</span>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHECK-IN PAGE -->
+    <div class="page" id="page-checkin">
+      <div style="max-width:520px;margin:0 auto;text-align:center;padding:2rem 0;">
+        <div style="font-size:3rem;margin-bottom:1rem;">🎟</div>
+        <h2 style="font-family:'Space Grotesk',sans-serif;margin-bottom:0.5rem;">Gate Check-In</h2>
+        <p style="color:var(--muted);margin-bottom:2rem;">Enter a ticket ID or scan QR code to check in an attendee.</p>
+        <div style="display:flex;gap:0.75rem;margin-bottom:1.5rem;">
+          <input id="checkinInput" class="search-input" style="width:100%;font-size:1rem;" placeholder="Enter Ticket ID or phone…" onkeydown="if(event.key==='Enter')checkIn()"/>
+          <button class="export-btn" style="white-space:nowrap;" onclick="checkIn()">Check In</button>
+        </div>
+        <div id="checkinResult" style="min-height:120px;"></div>
+      </div>
+      <div class="table-card" style="margin-top:2rem;">
+        <div class="table-header"><h3>Today's Check-Ins</h3></div>
+        <table>
+          <thead><tr><th>Ticket ID</th><th>Name</th><th>Type</th><th>Checked In At</th></tr></thead>
+          <tbody id="checkinBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REVENUE PAGE -->
+    <div class="page" id="page-revenue">
+      <div class="stats-grid">
+        <div class="stat-card revenue">
+          <div class="stat-label">Gross Revenue</div>
+          <div class="stat-value" id="rev-gross">KSh 0</div>
+          <div class="stat-sub">Before M-Pesa charges</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">M-Pesa Charges (est.)</div>
+          <div class="stat-value" id="rev-charges">KSh 0</div>
+          <div class="stat-sub">~1.5% processing</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Net Revenue</div>
+          <div class="stat-value" id="rev-net">KSh 0</div>
+          <div class="stat-sub">After charges</div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Revenue by Day</h3>
+        <div class="bar-chart" id="revChart"></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><h3>Completed Payments</h3></div>
+        <table>
+          <thead><tr><th>Date</th><th>Ticket ID</th><th>Name</th><th>Amount</th><th>M-Pesa Ref</th></tr></thead>
+          <tbody id="revBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MPESA LOGS PAGE -->
+    <div class="page" id="page-mpesa">
+      <div class="table-card">
+        <div class="table-header"><h3>M-Pesa Transaction Logs</h3></div>
+        <table>
+          <thead><tr><th>Time</th><th>Ticket ID</th><th>Phone</th><th>Amount</th><th>CheckoutRequestID</th><th>ResultCode</th><th>Status</th></tr></thead>
+          <tbody id="mpesaBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+      <div class="settings-card">
+        <h3>🎫 Event Settings</h3>
+        <div class="form-row">
+          <div class="form-field"><label>Event Name</label><input value="The Fitness Festival 2026"/></div>
+          <div class="form-field"><label>Event Date</label><input type="date" value="2026-08-08"/></div>
+          <div class="form-field"><label>Venue</label><input value="Nandi Bears Club, Nairobi"/></div>
+          <div class="form-field"><label>Total Ticket Capacity</label><input type="number" value="500"/></div>
+          <div class="form-field"><label>Standard Ticket Price (KSh)</label><input type="number" value="1000"/></div>
+          <div class="form-field"><label>Organiser Email</label><input value="info@fitnessfestival.co.ke"/></div>
+        </div>
+        <button class="save-btn" onclick="showToast('Event settings saved!','success')">Save Settings</button>
+      </div>
+
+      <div class="settings-card">
+        <h3>📲 M-Pesa (Daraja API)</h3>
+        <div class="form-row">
+          <div class="form-field"><label>Business Shortcode</label><input placeholder="e.g. 174379"/></div>
+          <div class="form-field"><label>Passkey</label><input type="password" placeholder="••••••••••••"/></div>
+          <div class="form-field"><label>Consumer Key</label><input placeholder="Consumer Key"/></div>
+          <div class="form-field"><label>Consumer Secret</label><input type="password" placeholder="••••••••••••"/></div>
+          <div class="form-field"><label>Callback URL</label><input placeholder="https://yourdomain.com/api/mpesa/callback"/></div>
+          <div class="form-field"><label>Environment</label>
+            <select><option>Sandbox</option><option>Production</option></select>
+          </div>
+        </div>
+        <button class="save-btn" onclick="showToast('M-Pesa settings saved!','success')">Save M-Pesa Config</button>
+      </div>
+
+      <div class="settings-card">
+        <h3>⚙️ System Toggles</h3>
+        <div class="toggle-row">
+          <div><label>Ticket Sales Open</label><p>Allow new ticket purchases</p></div>
+          <label class="toggle"><input type="checkbox" checked/><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div><label>Free Tickets</label><p>Enable disabled/complimentary tickets</p></div>
+          <label class="toggle"><input type="checkbox" checked/><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div><label>Email Confirmations</label><p>Send ticket via email after payment</p></div>
+          <label class="toggle"><input type="checkbox" checked/><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div><label>Maintenance Mode</label><p>Show coming-soon page to visitors</p></div>
+          <label class="toggle"><input type="checkbox"/><span class="slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page-content -->
+</div><!-- /main -->
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:1.5rem;right:1.5rem;z-index:99;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:0.875rem 1.25rem;font-size:0.875rem;max-width:320px;transform:translateY(80px);opacity:0;transition:all 0.3s;pointer-events:none;"></div>
+
+<script>
+// ── Simulated data store (in production this comes from the API)
+const DEMO = (() => {
+  const names = ['Amina Wanjiku','Brian Otieno','Carol Mwangi','David Kamau','Esther Njoroge','Frank Odhiambo','Grace Nzau','Henry Mutua','Irene Akinyi','James Kariuki','Lydia Omondi','Michael Njeri'];
+  const phones = ['0712345678','0723456789','0734567890','0745678901','0756789012','0767890123','0778901234','0789012345','0711223344','0722334455','0733445566','0744556677'];
+  const rows = [];
+  const now = new Date();
+  for (let i = 0; i < 38; i++) {
+    const daysAgo = Math.floor(Math.random()*7);
+    const d = new Date(now - daysAgo*86400000 - Math.random()*3600000*8);
+    const type = i < 5 ? 'free' : 'standard';
+    const statuses = ['completed','completed','completed','pending','failed'];
+    const status = type === 'free' ? 'free' : statuses[Math.floor(Math.random()*statuses.length)];
+    rows.push({
+      id: 'TKT-' + String(1000+i).padStart(4,'0'),
+      name: names[i % names.length],
+      email: names[i % names.length].toLowerCase().replace(' ','.') + '@gmail.com',
+      phone: phones[i % phones.length],
+      type, amount: type==='free'?0:1000,
+      mpesaRef: status==='completed' ? 'QHX'+Math.random().toString(36).substr(2,8).toUpperCase() : '—',
+      status, date: d
+    });
+  }
+  return rows.sort((a,b) => b.date - a.date);
+})();
+
+const checkins = [];
+let currentPage = 1;
+const PER_PAGE = 10;
+
+// ── Page routing
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const titles = {dashboard:'Dashboard',sales:'All Sales',checkin:'Gate Check-In',revenue:'Revenue',mpesa:'M-Pesa Logs',settings:'Settings'};
+  document.getElementById('pageTitle').textContent = titles[id] || id;
+  if (id === 'sales') renderSalesTable(DEMO);
+  if (id === 'revenue') renderRevenue();
+  if (id === 'mpesa') renderMpesa();
+}
+
+// ── Load / refresh
+function loadData() {
+  document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('en-KE');
+  const completed = DEMO.filter(r=>r.status==='completed'||r.status==='free');
+  const revenue   = DEMO.filter(r=>r.status==='completed').reduce((s,r)=>s+r.amount,0);
+  const standard  = DEMO.filter(r=>r.type==='standard'&&(r.status==='completed'||r.status==='free')).length;
+  const free      = DEMO.filter(r=>r.type==='free').length;
+  const pending   = DEMO.filter(r=>r.status==='pending').length;
+  document.getElementById('stat-total').textContent   = completed.length;
+  document.getElementById('stat-revenue').textContent = 'KSh ' + revenue.toLocaleString();
+  document.getElementById('stat-standard').textContent = standard;
+  document.getElementById('stat-free').textContent     = free;
+  document.getElementById('stat-pending').textContent  = pending;
+  renderBarChart();
+  renderBreakdown(standard, free, pending);
+  renderRecentTable();
+}
+
+// ── Bar chart
+function renderBarChart() {
+  const days = [];
+  const now = new Date();
+  for (let i=6; i>=0; i--) {
+    const d = new Date(now - i*86400000);
+    const label = d.toLocaleDateString('en-KE',{weekday:'short'});
+    const count = DEMO.filter(r=>{
+      const rd = new Date(r.date); 
+      return rd.toDateString()===d.toDateString() && r.status==='completed';
+    }).length;
+    days.push({label,count});
+  }
+  const max = Math.max(...days.map(d=>d.count),1);
+  document.getElementById('barChart').innerHTML = days.map(d=>`
+    <div class="bar-group">
+      <div class="bar-val">${d.count}</div>
+      <div class="bar" style="height:${Math.round((d.count/max)*120)}px"></div>
+      <div class="bar-label">${d.label}</div>
+    </div>
+  `).join('');
+}
+
+function renderBreakdown(standard, free, pending) {
+  const total = standard + free + pending || 1;
+  document.getElementById('ticketBreakdown').innerHTML = [
+    {label:'Standard (Paid)', count:standard, color:'var(--lime)'},
+    {label:'Free / Disabled', count:free, color:'var(--green)'},
+    {label:'Pending', count:pending, color:'#e08040'},
+  ].map(item=>`
+    <div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.35rem;">
+        <span style="font-size:0.82rem;">${item.label}</span>
+        <span style="font-size:0.82rem;font-weight:600;">${item.count}</span>
+      </div>
+      <div style="background:var(--mid);border-radius:4px;height:8px;overflow:hidden;">
+        <div style="background:${item.color};width:${Math.round((item.count/total)*100)}%;height:100%;border-radius:4px;transition:width 0.5s;"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Recent table
+function renderRecentTable() {
+  const tbody = document.getElementById('recentBody');
+  tbody.innerHTML = DEMO.slice(0,10).map(r=>`
+    <tr>
+      <td><span class="ticket-id">${r.id}</span></td>
+      <td>${r.name}</td>
+      <td>${r.phone}</td>
+      <td>${r.type==='free'?'Free/Disabled':'Standard'}</td>
+      <td>${r.amount?'KSh '+r.amount.toLocaleString():'Free'}</td>
+      <td><span class="badge ${r.status}">${r.status}</span></td>
+      <td style="color:var(--muted);font-size:0.78rem;">${r.date.toLocaleString('en-KE',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;">No transactions yet</td></tr>';
+}
+
+// ── Sales table
+let salesData = DEMO;
+function renderSalesTable(data) {
+  const start = (currentPage-1)*PER_PAGE, slice = data.slice(start, start+PER_PAGE);
+  document.getElementById('salesCount').textContent = `${data.length} records`;
+  document.getElementById('salesBody').innerHTML = slice.map(r=>`
+    <tr>
+      <td><span class="ticket-id">${r.id}</span></td>
+      <td>${r.name}</td>
+      <td style="font-size:0.78rem;color:var(--muted);">${r.email}</td>
+      <td>${r.phone}</td>
+      <td>${r.type==='free'?'Free/Disabled':'Standard'}</td>
+      <td>${r.amount?'KSh '+r.amount.toLocaleString():'Free'}</td>
+      <td style="font-size:0.75rem;font-family:'Space Grotesk',sans-serif;color:var(--lime);">${r.mpesaRef}</td>
+      <td><span class="badge ${r.status}">${r.status}</span></td>
+      <td style="color:var(--muted);font-size:0.75rem;">${r.date.toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td>
+        <button onclick="viewTicket('${r.id}')" style="background:none;border:1px solid var(--border);color:var(--lime);padding:0.25rem 0.6rem;border-radius:4px;font-size:0.72rem;cursor:pointer;">View</button>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:2rem;">No data</td></tr>';
+
+  // Pagination
+  const pages = Math.ceil(data.length/PER_PAGE);
+  document.getElementById('pagination').innerHTML = Array.from({length:pages},(_,i)=>
+    `<button class="page-btn ${currentPage===i+1?'active':''}" onclick="goPage(${i+1})">${i+1}</button>`
+  ).join('');
+}
+function goPage(p) { currentPage=p; renderSalesTable(salesData); }
+function filterTable(q) {
+  salesData = q ? DEMO.filter(r=>r.name.toLowerCase().includes(q.toLowerCase())||r.phone.includes(q)||r.id.includes(q)) : DEMO;
+  currentPage=1; renderSalesTable(salesData);
+}
+
+// ── Revenue
+function renderRevenue() {
+  const gross = DEMO.filter(r=>r.status==='completed').reduce((s,r)=>s+r.amount,0);
+  const charges = Math.round(gross*0.015);
+  document.getElementById('rev-gross').textContent = 'KSh '+gross.toLocaleString();
+  document.getElementById('rev-charges').textContent = 'KSh '+charges.toLocaleString();
+  document.getElementById('rev-net').textContent = 'KSh '+(gross-charges).toLocaleString();
+  document.getElementById('revBody').innerHTML = DEMO.filter(r=>r.status==='completed').map(r=>`
+    <tr>
+      <td style="color:var(--muted);font-size:0.78rem;">${r.date.toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td><span class="ticket-id">${r.id}</span></td>
+      <td>${r.name}</td>
+      <td>KSh ${r.amount.toLocaleString()}</td>
+      <td style="font-family:'Space Grotesk',sans-serif;font-size:0.8rem;color:var(--lime);">${r.mpesaRef}</td>
+    </tr>
+  `).join('');
+  // Rev chart
+  renderRevChart();
+}
+function renderRevChart() {
+  const days = [];
+  const now = new Date();
+  for (let i=6;i>=0;i--) {
+    const d=new Date(now-i*86400000);
+    const rev=DEMO.filter(r=>{const rd=new Date(r.date);return rd.toDateString()===d.toDateString()&&r.status==='completed';}).reduce((s,r)=>s+r.amount,0);
+    days.push({label:d.toLocaleDateString('en-KE',{weekday:'short'}),rev});
+  }
+  const max=Math.max(...days.map(d=>d.rev),1);
+  document.getElementById('revChart').innerHTML=days.map(d=>`
+    <div class="bar-group">
+      <div class="bar-val" style="font-size:0.62rem;">${d.rev?'KSh'+d.rev/1000+'k':''}</div>
+      <div class="bar" style="height:${Math.round((d.rev/max)*120)}px;background:var(--gold)"></div>
+      <div class="bar-label">${d.label}</div>
+    </div>
+  `).join('');
+}
+
+// ── M-Pesa logs
+function renderMpesa() {
+  document.getElementById('mpesaBody').innerHTML = DEMO.filter(r=>r.type!=='free').map(r=>`
+    <tr>
+      <td style="font-size:0.75rem;color:var(--muted);">${r.date.toLocaleString('en-KE')}</td>
+      <td><span class="ticket-id">${r.id}</span></td>
+      <td>${r.phone}</td>
+      <td>KSh ${r.amount.toLocaleString()}</td>
+      <td style="font-size:0.72rem;font-family:'Space Grotesk',sans-serif;color:var(--muted);">${r.mpesaRef}</td>
+      <td style="font-size:0.8rem;">${r.status==='completed'?'0 (Success)':r.status==='pending'?'—':'1032 (Cancelled)'}</td>
+      <td><span class="badge ${r.status}">${r.status}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ── Check-in
+function checkIn() {
+  const val = document.getElementById('checkinInput').value.trim();
+  const resultEl = document.getElementById('checkinResult');
+  if (!val) return;
+  const ticket = DEMO.find(r=>r.id.toLowerCase()===val.toLowerCase()||r.phone===val.replace(/\s/g,''));
+  if (!ticket) {
+    resultEl.innerHTML = `<div style="background:rgba(224,85,85,0.12);border:1px solid rgba(224,85,85,0.35);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">❌</div><p style="font-weight:600;color:#f07070;">Ticket Not Found</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">No ticket found for "${val}"</p></div>`;
+    return;
+  }
+  if (ticket.status==='pending'||ticket.status==='failed') {
+    resultEl.innerHTML = `<div style="background:rgba(224,128,64,0.12);border:1px solid rgba(224,128,64,0.3);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">⚠️</div><p style="font-weight:600;color:#e09050;">Payment Not Confirmed</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">This ticket's payment is ${ticket.status}.</p></div>`;
+    return;
+  }
+  const alreadyIn = checkins.find(c=>c.id===ticket.id);
+  if (alreadyIn) {
+    resultEl.innerHTML = `<div style="background:rgba(224,128,64,0.12);border:1px solid rgba(224,128,64,0.3);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">🔁</div><p style="font-weight:600;color:#e09050;">Already Checked In</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">${ticket.name} was checked in at ${alreadyIn.time}</p></div>`;
+    return;
+  }
+  const time = new Date().toLocaleTimeString('en-KE');
+  checkins.push({...ticket, time});
+  resultEl.innerHTML = `<div style="background:rgba(58,125,48,0.18);border:1px solid rgba(58,125,48,0.4);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2.5rem;margin-bottom:0.5rem;">✅</div><p style="font-weight:700;color:#7dca6a;font-size:1.1rem;">${ticket.name}</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">${ticket.id} · ${ticket.type==='free'?'Free/Disabled':'Standard'}</p><p style="color:var(--lime);font-size:0.8rem;margin-top:0.5rem;">Checked in at ${time}</p></div>`;
+  document.getElementById('checkinBody').innerHTML = checkins.map(c=>`
+    <tr><td><span class="ticket-id">${c.id}</span></td><td>${c.name}</td><td>${c.type==='free'?'Free/Disabled':'Standard'}</td><td style="color:var(--lime);">${c.time}</td></tr>
+  `).join('');
+  document.getElementById('checkinInput').value='';
+}
+
+// ── Export CSV
+function exportCSV() {
+  const headers = ['Ticket ID','Name','Email','Phone','Type','Amount','M-Pesa Ref','Status','Date'];
+  const rows = DEMO.map(r=>[r.id,r.name,r.email,r.phone,r.type,r.amount,r.mpesaRef,r.status,r.date.toLocaleDateString('en-KE')]);
+  const csv = [headers,...rows].map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fitness-festival-2026-tickets.csv';
+  a.click();
+  showToast('CSV exported!','success');
+}
+
+// ── View ticket (simple alert for demo)
+function viewTicket(id) {
+  const t = DEMO.find(r=>r.id===id);
+  if(t) showToast(`${t.name} · ${t.phone} · ${t.status}`,'info');
+}
+
+// ── Toast
+function showToast(msg, type='info') {
+  const el = document.getElementById('toast');
+  el.style.borderColor = type==='success'?'rgba(58,125,48,0.5)':type==='error'?'rgba(224,85,85,0.4)':'var(--border)';
+  el.textContent = msg;
+  el.style.transform='translateY(0)'; el.style.opacity='1';
+  setTimeout(()=>{el.style.transform='translateY(80px)'; el.style.opacity='0';},3500);
+}
+
+// ── Boot
+loadData();
+</script>
+</body>
+</html>

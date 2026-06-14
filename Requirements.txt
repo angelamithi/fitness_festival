@@ -1,0 +1,8 @@
+# Fitness Festival 2026 — Python dependencies
+# Install with:  pip install -r requirements.txt
+
+fastapi==0.111.0          # Web framework
+uvicorn[standard]==0.29.0 # ASGI server (runs FastAPI)
+httpx==0.27.0             # Async HTTP client (for M-Pesa API calls)
+python-dotenv==1.0.1      # Load .env file
+pydantic[email]==2.7.1    # Request validation + email validation
