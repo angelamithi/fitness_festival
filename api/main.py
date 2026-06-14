@@ -190,11 +190,12 @@ def get_mpesa_password(timestamp: str) -> str:
     return base64.b64encode(raw.encode()).decode()
 
 def format_phone(phone: str) -> str:
-    phone = phone.replace(" ", "").replace("-", "")
+    """Normalize any Kenyan number format to 2547XXXXXXXX."""
+    phone = phone.replace(" ", "").replace("-", "").replace("+", "")
     if phone.startswith("07") or phone.startswith("01"):
         return "254" + phone[1:]
-    if phone.startswith("+254"):
-        return phone[1:]
+    if phone.startswith("254"):
+        return phone          # already correct format
     return phone
 
 async def get_mpesa_token() -> str:
@@ -207,8 +208,19 @@ async def get_mpesa_token() -> str:
             headers={"Authorization": f"Basic {credentials}"},
             timeout=15,
         )
-        response.raise_for_status()
-        return response.json()["access_token"]
+        log.info(f"M-Pesa token request status: {response.status_code}")
+        if response.status_code != 200:
+            log.error(f"M-Pesa token error body: {response.text}")
+            raise httpx.HTTPStatusError(
+                f"Token request failed with {response.status_code}: {response.text}",
+                request=response.request,
+                response=response,
+            )
+        data = response.json()
+        if "access_token" not in data:
+            log.error(f"Unexpected token response: {data}")
+            raise ValueError(f"No access_token in response: {data}")
+        return data["access_token"]
 
 
 # ─────────────────────────────────────────────────────────────
@@ -342,49 +354,81 @@ async def stk_push(body: TicketPurchaseRequest):
         "mpesa_ref":           None,
     }
 
+    # ── Sandbox simulation mode ──────────────────────────────────
+    # Set MPESA_SIMULATE=true in Render env vars to bypass the real
+    # Safaricom API and test the full payment flow without real credentials.
+    if os.getenv("MPESA_SIMULATE", "false").lower() == "true":
+        log.info(f"[SIMULATE] Bypassing real STK push for order {order_id}")
+        orders[order_id]["checkout_request_id"] = f"sim_{order_id}"
+        return {"success": True, "order_id": order_id, "message": "STK push sent (simulation mode)."}
+
+    # ── Real M-Pesa STK push ──────────────────────────────────────
     try:
-        token     = await get_mpesa_token()
+        log.info(f"Fetching M-Pesa token from {mpesa.base_url}")
+        token = await get_mpesa_token()
+        log.info("M-Pesa token obtained successfully")
+
         timestamp = get_mpesa_timestamp()
         password  = get_mpesa_password(timestamp)
         phone_fmt = format_phone(body.phone)
 
+        log.info(f"Sending STK push → phone={phone_fmt}  amount={body.amount}  shortcode={mpesa.shortcode}")
+
+        stk_payload = {
+            "BusinessShortCode": mpesa.shortcode,
+            "Password":          password,
+            "Timestamp":         timestamp,
+            "TransactionType":   "CustomerPayBillOnline",
+            "Amount":            body.amount,
+            "PartyA":            phone_fmt,
+            "PartyB":            mpesa.shortcode,
+            "PhoneNumber":       phone_fmt,
+            "CallBackURL":       mpesa.callback_url,
+            "AccountReference":  ticket_id,
+            "TransactionDesc":   f"Fitness Festival 2026 Ticket - {ticket_id}",
+        }
+        log.info(f"STK payload (minus password): shortcode={mpesa.shortcode} phone={phone_fmt} amount={body.amount} callback={mpesa.callback_url}")
+
         async with httpx.AsyncClient() as client:
             stk_res = await client.post(
                 f"{mpesa.base_url}/mpesa/stkpush/v1/processrequest",
-                json={
-                    "BusinessShortCode": mpesa.shortcode,
-                    "Password":          password,
-                    "Timestamp":         timestamp,
-                    "TransactionType":   "CustomerPayBillOnline",
-                    "Amount":            body.amount,
-                    "PartyA":            phone_fmt,
-                    "PartyB":            mpesa.shortcode,
-                    "PhoneNumber":       phone_fmt,
-                    "CallBackURL":       mpesa.callback_url,
-                    "AccountReference":  ticket_id,
-                    "TransactionDesc":   f"Fitness Festival 2026 Ticket - {ticket_id}",
-                },
+                json=stk_payload,
                 headers={"Authorization": f"Bearer {token}"},
-                timeout=20,
+                timeout=30,
             )
-            stk_res.raise_for_status()
-            stk_data = stk_res.json()
+
+        # Always log the full Safaricom response — visible in Render logs
+        log.info(f"Safaricom STK status: {stk_res.status_code}")
+        log.info(f"Safaricom STK body:   {stk_res.text}")
+
+        stk_data = stk_res.json()
 
         if stk_data.get("ResponseCode") == "0":
             orders[order_id]["checkout_request_id"] = stk_data["CheckoutRequestID"]
-            log.info(f"STK push sent  order={order_id}")
+            log.info(f"STK push sent  order={order_id}  checkout={stk_data['CheckoutRequestID']}")
             return {"success": True, "order_id": order_id, "message": "STK push sent to your phone."}
         else:
+            error_msg = stk_data.get("ResponseDescription") or stk_data.get("errorMessage") or "STK push failed."
+            log.error(f"Safaricom rejected STK push: {stk_data}")
             orders[order_id]["status"] = "failed"
-            raise HTTPException(status_code=400, detail=stk_data.get("ResponseDescription", "STK push failed."))
+            raise HTTPException(status_code=400, detail=f"M-Pesa: {error_msg}")
 
-    except httpx.HTTPError as exc:
-        log.error(f"M-Pesa HTTP error: {exc}")
-        if IS_DEV:
-            log.warning(f"[DEV] Simulating STK push for order {order_id}")
-            return {"success": True, "order_id": order_id, "message": "STK push sent (dev mode)."}
+    except httpx.HTTPStatusError as exc:
+        body_text = exc.response.text
+        log.error(f"M-Pesa HTTP {exc.response.status_code}: {body_text}")
         orders[order_id]["status"] = "failed"
-        raise HTTPException(status_code=502, detail="M-Pesa service unavailable. Please try again.")
+        raise HTTPException(
+            status_code=502,
+            detail=f"Safaricom error {exc.response.status_code}: {body_text[:300]}"
+        )
+    except httpx.HTTPError as exc:
+        log.error(f"M-Pesa network error: {type(exc).__name__}: {exc}")
+        orders[order_id]["status"] = "failed"
+        raise HTTPException(status_code=502, detail=f"Could not reach M-Pesa: {type(exc).__name__}")
+    except Exception as exc:
+        log.exception(f"Unexpected STK push error: {exc}")
+        orders[order_id]["status"] = "failed"
+        raise HTTPException(status_code=500, detail=f"Server error: {str(exc)[:200]}")
 
 
 @app.post("/api/mpesa/callback")
