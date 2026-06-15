@@ -150,7 +150,7 @@
     .search-input::placeholder { color: var(--muted); }
     table { width: 100%; border-collapse: collapse; }
     th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); padding: 0.75rem 1.5rem; text-align: left; background: var(--mid); }
-    td { padding: 1rem 1.5rem; border-top: 1px solid var(--border); font-size: 0.875rem; vertical-align: middle; }
+    td { padding: 0.75rem 1.5rem; border-top: 1px solid var(--border); font-size: 0.875rem; vertical-align: middle; max-width: 180px; }
     tr:hover td { background: rgba(184,212,50,0.04); }
     .badge {
       display: inline-flex; align-items: center; gap: 0.3rem;
@@ -161,6 +161,11 @@
     .badge.failed    { background: rgba(224,85,85,0.2); color: #e08080; }
     .badge.free      { background: rgba(58,125,48,0.15); color: #90d080; }
     .ticket-id { font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: var(--lime); }
+    .ticket-id-cell { max-height: 56px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.2rem; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .ticket-id-cell::-webkit-scrollbar { width: 3px; }
+    .ticket-id-cell::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .ticket-id-row { display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+    .ticket-id-num { font-size: 0.58rem; color: var(--muted); flex-shrink: 0; }
     .table-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--muted); }
     .pagination { display: flex; gap: 0.4rem; }
     .page-btn { background: var(--mid); border: 1px solid var(--border); color: var(--white); width: 32px; height: 32px; border-radius: var(--radius); cursor: pointer; font-size: 0.8rem; transition: all 0.18s; }
@@ -649,12 +654,15 @@ function renderSalesTable(data) {
   document.getElementById('salesBody').innerHTML = slice.map(r=>{
     const ids = (r.ticket_id||'').split(',').map(s=>s.trim()).filter(Boolean);
     const qty = ids.length || 1;
-    const idDisplay = ids.map((id,i)=>
-      '<div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:'+(i<ids.length-1?'0.25rem':'0')+'">' +
-      '<span class="ticket-id">'+id+'</span>' +
-      (qty>1?'<span style="font-size:0.6rem;color:var(--muted);">#'+(i+1)+'</span>':'') +
-      '</div>'
-    ).join('');
+    const idDisplay = '<div class="ticket-id-cell">' +
+      ids.map((id,i)=>
+        '<div class="ticket-id-row">' +
+        (qty>1?'<span class="ticket-id-num">'+(i+1)+'.</span>':'') +
+        '<span class="ticket-id">'+id+'</span>' +
+        '</div>'
+      ).join('') +
+      (qty>1?'<div style="font-size:0.6rem;color:var(--muted);padding-top:0.1rem;">'+qty+' tickets</div>':'') +
+      '</div>';
     return '<tr>' +
       '<td>'+idDisplay+'</td>' +
       '<td>'+r.name+'</td>' +
