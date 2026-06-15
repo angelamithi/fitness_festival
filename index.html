@@ -110,9 +110,9 @@
     .ticket-opt.selected, .ticket-opt:hover { border-color: var(--accent-lime); }
     .ticket-opt.selected { background: rgba(184,212,50,0.08); }
     .ticket-opt input[type=radio] { display: none; }
-    .ticket-opt--info { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: var(--radius); padding: 1rem 1.25rem; cursor: not-allowed; opacity: 0.65; position: relative; }
-    .ticket-opt--info .ticket-opt-price { color: var(--accent-gold); }
-    .ticket-opt--info-badge { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(232,200,64,0.12); color: var(--accent-gold); border: 1px solid rgba(232,200,64,0.25); padding: 0.15rem 0.5rem; border-radius: 3px; margin-top: 0.25rem; display: inline-block; width: fit-content; }
+    .ticket-opt--info { display: flex; align-items: center; justify-content: space-between; gap: 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: var(--radius); padding: 1rem 1.25rem; cursor: not-allowed; opacity: 0.6; }
+    .ticket-opt--info .ticket-opt-price { color: var(--accent-gold); flex-shrink: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.1rem; }
+    .ticket-opt--info-badge { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; background: rgba(232,200,64,0.1); color: var(--accent-gold); border: 1px solid rgba(232,200,64,0.2); padding: 0.2rem 0.5rem; border-radius: 3px; margin-top: 0.4rem; }
     .ticket-opt-label { font-weight: 600; font-size: 0.95rem; }
     .ticket-opt-sublabel { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
     .ticket-opt-price { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--accent-lime); }
@@ -484,13 +484,13 @@
           <div><div class="ticket-opt-label">Standard Entry</div><div class="ticket-opt-sublabel">Full day access to all activities</div></div>
           <div class="ticket-opt-price">KSh 1,000</div>
         </label>
-        <div class="ticket-opt--info" title="Disability access is free — present valid documentation at the gate. No online booking required.">
-          <div>
-            <div class="ticket-opt-label">Disability &amp; Special Needs Access</div>
-            <div class="ticket-opt-sublabel">Present valid documentation at the gate</div>
-            <div class="ticket-opt--info-badge">♿ Gate access only — no online booking</div>
+        <div class="ticket-opt--info" title="Free at gate — bring valid disability documentation">
+          <div style="flex:1;min-width:0;">
+            <div class="ticket-opt-label" style="font-weight:600;font-size:0.95rem;">Disability &amp; Special Needs</div>
+            <div class="ticket-opt-sublabel">Show valid documentation at the gate</div>
+            <div class="ticket-opt--info-badge">♿ Free at gate · No online booking</div>
           </div>
-          <div class="ticket-opt-price free">FREE</div>
+          <div class="ticket-opt-price free" style="flex-shrink:0;">FREE</div>
         </div>
       </div>
       <div class="ticket-form-field"><label>Full Name</label><input type="text" id="buyerName" placeholder="John Doe"/></div>
@@ -787,13 +787,13 @@
             <div><div class="ticket-opt-label">Standard Entry</div><div class="ticket-opt-sublabel">Full day — all activities</div></div>
             <div class="ticket-opt-price">KSh 1,000</div>
           </label>
-          <div class="disability-info-note">
-            <span>♿</span>
-            <div>
-              <strong>Disability &amp; Special Needs?</strong>
-              Free services are available on the day — no ticket needed. Pre-register through your local health worker, hospital, or school.
-              <a href="#disability">Learn more ↓</a>
+          <div class="ticket-opt--info" title="Free at gate — bring valid disability documentation">
+            <div style="flex:1;min-width:0;">
+              <div class="ticket-opt-label" style="font-weight:600;font-size:0.95rem;">Disability &amp; Special Needs</div>
+              <div class="ticket-opt-sublabel">Show valid documentation at the gate</div>
+              <div class="ticket-opt--info-badge">♿ Free at gate · No online booking</div>
             </div>
+            <div class="ticket-opt-price free" style="flex-shrink:0;">FREE</div>
           </div>
         </div>
         <div class="ticket-form-field"><label>Full Name</label><input type="text" id="buyerName2" placeholder="Your full name"/></div>
