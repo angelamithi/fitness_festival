@@ -143,6 +143,7 @@ class TicketPurchaseRequest(BaseModel):
     email:       EmailStr
     amount:      int
     ticket_type: str = Field(default="standard", alias="ticketType")
+    quantity:    int = Field(default=1, ge=1, le=10)
 
 class FreeTicketRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
@@ -183,7 +184,7 @@ async def get_mpesa_token() -> str:
 # ─────────────────────────────────────────────────────────────
 # Email helper
 # ─────────────────────────────────────────────────────────────
-def send_ticket_email(ticket: dict) -> None:
+def send_ticket_email(ticket: dict, all_ticket_ids: list = None) -> None:
     smtp_user = os.getenv("SMTP_USER", "")
     smtp_pass = os.getenv("SMTP_PASS", "")
     if not smtp_user or not smtp_pass:
@@ -246,9 +247,12 @@ def send_ticket_email(ticket: dict) -> None:
 # Helpers — convert DB row to dict
 # ─────────────────────────────────────────────────────────────
 def order_to_dict(o: Order) -> dict:
+    ticket_ids = o.ticket_id.split(",") if o.ticket_id else []
     return {
         "order_id":            o.order_id,
         "ticket_id":           o.ticket_id,
+        "ticket_ids":          ticket_ids,
+        "quantity":            len(ticket_ids),
         "name":                o.name,
         "phone":               o.phone,
         "email":               o.email,
@@ -293,17 +297,19 @@ async def admin_verify(token: str = Depends(require_admin)):
 # ─────────────────────────────────────────────────────────────
 @app.post("/api/mpesa/stk-push")
 async def stk_push(body: TicketPurchaseRequest, db: AsyncSession = Depends(get_db)):
-    order_id  = str(uuid.uuid4())
-    ticket_id = generate_ticket_id()
+    order_id   = str(uuid.uuid4())
+    quantity   = max(1, min(10, body.quantity))
+    # Generate one unique ticket ID per ticket in the order
+    ticket_ids = [generate_ticket_id() for _ in range(quantity)]
+    ticket_id  = ",".join(ticket_ids)  # stored as e.g. "TKT-AB12CD,TKT-EF34GH"
 
-    # Persist immediately as pending
     order = Order(
         order_id    = order_id,
         ticket_id   = ticket_id,
         name        = body.name,
         phone       = body.phone,
         email       = body.email,
-        amount      = body.amount,
+        amount      = body.amount,  # frontend already sends total (price x qty)
         ticket_type = body.ticket_type,
         status      = "pending",
     )
@@ -389,7 +395,8 @@ async def mpesa_callback(request: Request, db: AsyncSession = Depends(get_db)):
         order.amount_paid = meta.get("Amount")
         await db.commit()
         try:
-            send_ticket_email(order_to_dict(order))
+            od = order_to_dict(order)
+            send_ticket_email(od, all_ticket_ids=od["ticket_ids"])
         except Exception as e:
             log.error(f"Email failed: {e}")
         log.info(f"Payment completed order={order.order_id} ref={order.mpesa_ref}")
@@ -426,7 +433,8 @@ async def simulate_payment(order_id: str, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
     try:
-        send_ticket_email(order_to_dict(order))
+        od = order_to_dict(order)
+        send_ticket_email(od, all_ticket_ids=od["ticket_ids"])
     except Exception as e:
         log.error(f"Email failed: {e}")
 
@@ -486,14 +494,24 @@ async def admin_stats(token: str = Depends(require_admin), db: AsyncSession = De
     result     = await db.execute(select(Order))
     all_orders = result.scalars().all()
     completed  = [o for o in all_orders if o.status == "completed"]
-    revenue    = sum(o.amount for o in completed if o.ticket_type != "free")
+
+    # Count individual tickets (bulk orders have comma-separated IDs)
+    def ticket_count(o: Order) -> int:
+        return len(o.ticket_id.split(",")) if o.ticket_id else 1
+
+    total_tickets    = sum(ticket_count(o) for o in completed)
+    standard_tickets = sum(ticket_count(o) for o in completed if o.ticket_type == "standard")
+    free_tickets     = sum(ticket_count(o) for o in completed if o.ticket_type == "free")
+    revenue          = sum(o.amount for o in completed if o.ticket_type != "free")
+
     return {
-        "total":    len(completed),
-        "revenue":  revenue,
-        "standard": sum(1 for o in completed if o.ticket_type == "standard"),
-        "free":     sum(1 for o in completed if o.ticket_type == "free"),
-        "pending":  sum(1 for o in all_orders if o.status == "pending"),
-        "failed":   sum(1 for o in all_orders if o.status == "failed"),
+        "total":          len(completed),          # number of orders
+        "total_tickets":  total_tickets,            # number of individual tickets
+        "revenue":        revenue,
+        "standard":       standard_tickets,
+        "free":           free_tickets,
+        "pending":        sum(1 for o in all_orders if o.status == "pending"),
+        "failed":         sum(1 for o in all_orders if o.status == "failed"),
     }
 
 

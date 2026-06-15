@@ -354,7 +354,7 @@
         </div>
         <table id="salesTable">
           <thead><tr>
-            <th>Ticket ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Type</th><th>Amount</th><th>M-Pesa Ref</th><th>Status</th><th>Date</th><th>Actions</th>
+            <th>Ticket ID(s)</th><th>Name</th><th>Email</th><th>Phone</th><th>Type</th><th>Qty</th><th>Amount</th><th>M-Pesa Ref</th><th>Status</th><th>Date</th><th>Actions</th>
           </tr></thead>
           <tbody id="salesBody"></tbody>
         </table>
@@ -552,8 +552,8 @@ async function loadData() {
     // Store live data globally so other pages can use it
     window.LIVE_DATA = tickets;
 
-    // Update stat cards
-    document.getElementById('stat-total').textContent    = stats.total;
+    // Update stat cards (total = number of completed tickets, not orders)
+    document.getElementById('stat-total').textContent    = stats.total_tickets !== undefined ? stats.total_tickets : stats.total;
     document.getElementById('stat-revenue').textContent  = 'KSh ' + stats.revenue.toLocaleString();
     document.getElementById('stat-standard').textContent = stats.standard;
     document.getElementById('stat-free').textContent     = stats.free;
@@ -625,17 +625,19 @@ function renderRecentTableLive(tickets) {
   const tbody = document.getElementById('recentBody');
   if (!tbody) return;
   const slice = tickets.slice(0,10);
-  tbody.innerHTML = slice.map(r=>`
-    <tr>
-      <td><span class="ticket-id">${r.ticket_id}</span></td>
+  tbody.innerHTML = slice.map(r=>{
+    const qty = r.quantity || (r.ticket_id||'').split(',').length || 1;
+    const firstId = (r.ticket_id||'').split(',')[0].trim();
+    return `<tr>
+      <td><span class="ticket-id">${firstId}</span>${qty>1?` <span style="font-size:0.65rem;background:rgba(184,212,50,0.15);color:var(--lime);padding:0.1rem 0.4rem;border-radius:3px;">×${qty}</span>`:''}</td>
       <td>${r.name}</td>
       <td>${r.phone}</td>
       <td>${r.ticket_type==='free'?'Free/Disabled':'Standard'}</td>
       <td>${r.amount?'KSh '+r.amount.toLocaleString():'Free'}</td>
       <td><span class="badge ${r.status}">${r.status}</span></td>
       <td style="color:var(--muted);font-size:0.78rem;">${new Date(r.created_at).toLocaleString('en-KE',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
-    </tr>
-  `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;">No transactions yet</td></tr>';
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;">No transactions yet</td></tr>';
 }
 function renderRecentTable() { renderRecentTableLive(getLiveData()); }
 
@@ -644,13 +646,19 @@ let salesData = [];
 function renderSalesTable(data) {
   const start = (currentPage-1)*PER_PAGE, slice = data.slice(start, start+PER_PAGE);
   document.getElementById('salesCount').textContent = `${data.length} records`;
-  document.getElementById('salesBody').innerHTML = slice.map(r=>`
-    <tr>
-      <td><span class="ticket-id">${r.ticket_id}</span></td>
+  document.getElementById('salesBody').innerHTML = slice.map(r=>{
+    const ids = (r.ticket_id||'').split(',');
+    const qty = r.quantity || ids.length || 1;
+    const idDisplay = ids.length > 1
+      ? ids.map(id=>`<div><span class="ticket-id">${id.trim()}</span></div>`).join('')
+      : `<span class="ticket-id">${ids[0]||''}</span>`;
+    return `<tr>
+      <td>${idDisplay}</td>
       <td>${r.name}</td>
       <td style="font-size:0.78rem;color:var(--muted);">${r.email}</td>
       <td>${r.phone}</td>
       <td>${r.ticket_type==='free'?'Free/Disabled':'Standard'}</td>
+      <td style="text-align:center;font-weight:600;">${qty}</td>
       <td>${r.amount?'KSh '+r.amount.toLocaleString():'Free'}</td>
       <td style="font-size:0.75rem;font-family:'Space Grotesk',sans-serif;color:var(--lime);">${r.mpesa_ref||'—'}</td>
       <td><span class="badge ${r.status}">${r.status}</span></td>
@@ -658,8 +666,8 @@ function renderSalesTable(data) {
       <td>
         <button onclick="viewTicket('${r.ticket_id}')" style="background:none;border:1px solid var(--border);color:var(--lime);padding:0.25rem 0.6rem;border-radius:4px;font-size:0.72rem;cursor:pointer;">View</button>
       </td>
-    </tr>
-  `).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:2rem;">No data</td></tr>';
+    </tr>`;
+  }).join('') || '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:2rem;">No data</td></tr>';
 
   // Pagination
   const pages = Math.ceil(data.length/PER_PAGE);
@@ -773,7 +781,12 @@ function exportCSV() {
 // ── View ticket (simple alert for demo)
 function viewTicket(id) {
   const t = getLiveData().find(r=>r.ticket_id===id);
-  if(t) showToast(`${t.name} · ${t.phone} · ${t.status}`,'info');
+  if (!t) return;
+  const qty = t.quantity || (t.ticket_id||'').split(',').length || 1;
+  const msg = qty > 1
+    ? `${t.name} · ${qty} tickets · KSh ${t.amount.toLocaleString()} · ${t.status}`
+    : `${t.name} · ${t.phone} · ${t.status}`;
+  showToast(msg, 'info');
 }
 
 // ── Toast
