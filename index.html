@@ -272,10 +272,20 @@
     /* ── PARTNERS ── */
     #partners { background: var(--bg-dark); }
     .partners-grid { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; margin-top: 3rem; }
-    .partner-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2.5rem; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; min-width: 160px; }
+    .partner-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2rem; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; min-width: 160px; transition: border-color 0.2s, transform 0.2s; }
+    .partner-card:hover { border-color: var(--accent-lime); transform: translateY(-2px); }
     .partner-card .partner-logo { font-size: 2.2rem; }
+    .partner-logo-img { width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; }
+    .partner-logo-img img { max-width: 100%; max-height: 100%; object-fit: contain; filter: brightness(0) invert(1); opacity: 0.85; transition: opacity 0.2s; }
+    .partner-card:hover .partner-logo-img img { opacity: 1; }
     .partner-card .partner-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.85rem; text-align: center; }
-    .partner-card .partner-role { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-lime); }
+    .partner-card .partner-role { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-lime); text-align: center; }
+    /* Athlete card */
+    .partner-card--athlete { border-color: rgba(184,212,50,0.35); min-width: 180px; }
+    .partner-card--athlete .partner-role { color: var(--accent-gold); }
+    .partner-athlete-img { position: relative; width: 90px; height: 90px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-lime); flex-shrink: 0; }
+    .partner-athlete-img img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .partner-athlete-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; background: var(--bg-mid); }
 
     /* ── TICKET SECTION ── */
     #tickets { background: var(--bg-mid); }
@@ -343,6 +353,33 @@
       .countdown-inner { flex-direction: column; gap: 1rem; }
       .photo-item { width: 220px; height: 150px; }
     }
+    /* ── DISABILITY SECTION ── */
+    #disability { background: var(--bg-mid); }
+    .disability-intro { color: var(--text-muted); line-height: 1.8; max-width: 800px; margin-bottom: 3rem; font-size: 0.95rem; }
+    .disability-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+    .disability-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.75rem;
+      display: flex; flex-direction: column; gap: 0.75rem; transition: border-color 0.2s, transform 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .disability-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--accent-lime); }
+    .disability-card:hover { border-color: var(--accent-lime); transform: translateY(-3px); }
+    .disability-card-icon { font-size: 2.2rem; }
+    .disability-card h4 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem; }
+    .disability-card p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.65; }
+    .disability-free-tag { display: inline-flex; align-items: center; gap: 0.35rem; background: rgba(184,212,50,0.12); border: 1px solid rgba(184,212,50,0.3); color: var(--accent-lime); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.25rem 0.65rem; border-radius: 4px; width: fit-content; }
+    .disability-targets { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
+    .disability-targets h3 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 1.25rem; color: var(--accent-lime); }
+    .disability-targets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
+    .disability-target-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: var(--bg-mid); border-radius: var(--radius); font-size: 0.875rem; color: var(--text-muted); }
+    .disability-target-item strong { color: var(--accent-gold); font-family: 'Space Grotesk', sans-serif; white-space: nowrap; }
+    .disability-geo { background: rgba(184,212,50,0.06); border: 1px solid var(--border); border-radius: 12px; padding: 1.75rem; }
+    .disability-geo h3 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 1rem; }
+    .disability-geo ul { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .disability-geo li { display: flex; align-items: flex-start; gap: 0.6rem; color: var(--text-muted); font-size: 0.875rem; }
+    .disability-geo li::before { content: '→'; color: var(--accent-lime); flex-shrink: 0; font-weight: 700; }
+    .disability-note { background: rgba(232,200,64,0.08); border: 1px solid rgba(232,200,64,0.25); border-radius: var(--radius); padding: 1rem 1.25rem; margin-top: 1.5rem; font-size: 0.85rem; color: rgba(232,200,64,0.9); line-height: 1.7; font-style: italic; }
+
     @media (prefers-reduced-motion: reduce) {
       .photo-track { animation: none; }
       .reveal { opacity: 1; transform: none; }
@@ -355,7 +392,13 @@
 <!-- NAV -->
 <nav>
   <div class="nav-logo">
-    <div style="width:42px;height:42px;background:var(--accent-lime);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">🏃</div>
+    <div style="width:42px;height:42px;background:var(--accent-lime);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="15" cy="4.5" r="1.5" fill="#0d1f0f"/>
+        <path d="M9 8.5l3-2 2.5 3.5H18l-1 2h-3.5l-1 3.5L15 18l-1.5 1.5-2.5-4.5.5-3.5L9 10.5 7 13H4.5L6 10.5 9 8.5z" fill="#0d1f0f"/>
+        <path d="M6 19c3 0 5-1 7-3" stroke="#0d1f0f" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
     <div class="nav-logo-text">FITNESS FESTIVAL <span>Powered by Eastern Produce Kenya</span></div>
   </div>
   <ul class="nav-links">
@@ -363,6 +406,7 @@
     <li><a href="#activities">Activities</a></li>
     <li><a href="#venue">Venue</a></li>
     <li><a href="#partners">Partners</a></li>
+    <li><a href="#disability">Disability</a></li>
   </ul>
   <a href="#tickets" class="nav-cta">Get Tickets</a>
   <button class="menu-toggle" onclick="toggleMenu()">☰</button>
@@ -375,6 +419,7 @@
     <li><a href="#activities" style="color:var(--text-white);text-decoration:none;font-size:1rem;" onclick="toggleMenu()">Activities</a></li>
     <li><a href="#venue" style="color:var(--text-white);text-decoration:none;font-size:1rem;" onclick="toggleMenu()">Venue</a></li>
     <li><a href="#partners" style="color:var(--text-white);text-decoration:none;font-size:1rem;" onclick="toggleMenu()">Partners</a></li>
+    <li><a href="#disability" style="color:var(--text-white);text-decoration:none;font-size:1rem;" onclick="toggleMenu()">Disability</a></li>
     <li><a href="#tickets" class="btn-primary" onclick="toggleMenu()">Get Tickets</a></li>
   </ul>
 </div>
@@ -575,6 +620,70 @@
   </div>
 </section>
 
+<!-- DISABILITY & SPECIAL NEEDS -->
+<section id="disability">
+  <div class="section-inner">
+    <div class="section-eyebrow reveal">Disability &amp; Special Needs</div>
+    <h2 class="section-title reveal">SUPPORT PROGRAMME</h2>
+    <p class="disability-intro reveal">
+      Fitness Festival 2026 operates a dedicated Disability and Special Needs Support Zone, ensuring that persons with disabilities and children with special needs are not merely included as spectators but are active, celebrated participants in the event. This zone will deliver four flagship free services to the community.
+    </p>
+
+    <!-- 4 Free Services -->
+    <div class="disability-grid">
+      <div class="disability-card reveal">
+        <div class="disability-card-icon">👂</div>
+        <div class="disability-free-tag">✓ FREE Service</div>
+        <h4>Hearing Aids</h4>
+        <p>Distributed free of charge to community members — children and adults — identified with hearing impairments. Qualified audiologists will conduct assessments on the day and fit appropriate hearing aids. Pre-registration encouraged through schools for the deaf, community health workers, and local hospitals.</p>
+      </div>
+      <div class="disability-card reveal">
+        <div class="disability-card-icon">🦯</div>
+        <div class="disability-free-tag">✓ FREE Service</div>
+        <h4>White Canes</h4>
+        <p>Provided free to persons with visual impairments. These mobility tools are essential for safe and independent navigation, often inaccessible to low-income families in rural communities. Distribution coordinated through the Kenya Union of the Blind and local community health units.</p>
+      </div>
+      <div class="disability-card reveal">
+        <div class="disability-card-icon">♿</div>
+        <div class="disability-free-tag">✓ FREE Service</div>
+        <h4>Wheelchairs</h4>
+        <p>Donated to persons — including children — with mobility challenges. Beneficiaries pre-screened through referrals from hospitals, schools, and community health workers across Nandi County. The event facilitates proper fitting and basic mobility training, with follow-up physiotherapy referrals.</p>
+      </div>
+      <div class="disability-card reveal">
+        <div class="disability-card-icon">🩺</div>
+        <div class="disability-free-tag">✓ FREE Service</div>
+        <h4>Physiotherapy Services</h4>
+        <p>A dedicated physiotherapy clinic staffed by a minimum of two (2) licensed physiotherapists. Services include musculoskeletal assessments, therapeutic exercise, mobility and gait training, pain management guidance, and written referral letters. Special focus on children with cerebral palsy, developmental delays, and post-surgical conditions.</p>
+      </div>
+    </div>
+
+    <!-- Target Beneficiaries -->
+    <div class="disability-targets reveal">
+      <h3>🎯 Target Beneficiaries for Assistive Devices &amp; Physiotherapy</h3>
+      <div class="disability-targets-grid">
+        <div class="disability-target-item"><span>👂 Children with hearing impairments</span><strong>20–30 recipients</strong></div>
+        <div class="disability-target-item"><span>🦯 Persons with visual impairments</span><strong>20–30 recipients</strong></div>
+        <div class="disability-target-item"><span>♿ Persons with mobility challenges</span><strong>10–20 recipients</strong></div>
+        <div class="disability-target-item"><span>🩺 Physiotherapy beneficiaries</span><strong>50–100 persons</strong></div>
+      </div>
+      <div class="disability-note">
+        Pre-registration for assistive device distribution will open from June 1, 2026. Community health workers, schools for children with special needs, hospitals, and disability organisations will be engaged to identify and refer eligible beneficiaries in advance of the event.
+      </div>
+    </div>
+
+    <!-- Geographic Focus -->
+    <div class="disability-geo reveal">
+      <h3>📍 Geographic Focus</h3>
+      <ul>
+        <li>Kapsabet town and surrounding sub-counties</li>
+        <li>Tea-growing communities throughout Nandi County</li>
+        <li>All Nandi County residents seeking health status assessment through fitness</li>
+        <li>Neighbouring counties interested in wellness participation</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
 <!-- VENUE -->
 <section id="venue">
   <div class="section-inner">
@@ -649,13 +758,39 @@
     <div class="section-eyebrow reveal">Our Partners & Sponsors</div>
     <h2 class="section-title reveal">MADE POSSIBLE BY</h2>
     <div class="partners-grid reveal">
-      <div class="partner-card"><div class="partner-logo">🏥</div><div class="partner-name">Equity Afya</div><div class="partner-role">Health Partner</div></div>
-      <div class="partner-card"><div class="partner-logo">🏛️</div><div class="partner-name">Government Partner</div><div class="partner-role">Govt. Partner</div></div>
-      <div class="partner-card"><div class="partner-logo">🌿</div><div class="partner-name">Eastern Produce Kenya</div><div class="partner-role">Title Sponsor</div></div>
-      <div class="partner-card"><div class="partner-logo">⭐</div><div class="partner-name">Starfit</div><div class="partner-role">Fitness Partner</div></div>
+      <div class="partner-card">
+        <div class="partner-logo-img"><img src="YOUR_EQUITY_AFYA_LOGO.png" alt="Equity Afya" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🏥</span>'"/></div>
+        <div class="partner-name">Equity Afya</div>
+        <div class="partner-role">Health Partner</div>
+      </div>
+      <div class="partner-card">
+        <div class="partner-logo-img"><img src="YOUR_GOVT_LOGO.png" alt="Nandi County Government" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🏛️</span>'"/></div>
+        <div class="partner-name">Nandi County Government</div>
+        <div class="partner-role">Govt. Partner</div>
+      </div>
+      <div class="partner-card">
+        <div class="partner-logo-img"><img src="YOUR_EPK_LOGO.png" alt="Eastern Produce Kenya" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🌿</span>'"/></div>
+        <div class="partner-name">Eastern Produce Kenya</div>
+        <div class="partner-role">Title Sponsor</div>
+      </div>
+      <div class="partner-card">
+        <div class="partner-logo-img"><img src="YOUR_STARFIT_LOGO.png" alt="Starfit" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>⭐</span>'"/></div>
+        <div class="partner-name">Starfit</div>
+        <div class="partner-role">Fitness Partner</div>
+      </div>
+      <div class="partner-card partner-card--athlete">
+        <div class="partner-athlete-img">
+          <img src="YOUR_PERIS_IMAGE.jpg" alt="Peris Jepchirchir" onerror="this.style.display='none'"/>
+          <div class="partner-athlete-fallback">🏃‍♀️</div>
+        </div>
+        <div class="partner-name">Peris Jepchirchir</div>
+        <div class="partner-role">Brand Ambassador · Long Distance Athlete</div>
+      </div>
     </div>
   </div>
 </section>
+
+
 
 <!-- FOOTER -->
 <footer>
