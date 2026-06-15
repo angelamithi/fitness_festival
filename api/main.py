@@ -53,6 +53,8 @@ ALLOWED_ORIGINS = [
     "http://localhost:3000",                  # local dev
     "http://localhost:8000",                  # local FastAPI dev
     "http://127.0.0.1:5500",                 # VS Code Live Server
+    "https://www.fitnessfestival.co.ke",     # Custom domain (www)
+    "https://fitnessfestival.co.ke",         # Custom domain (non-www)
 ]
 
 app.add_middleware(
