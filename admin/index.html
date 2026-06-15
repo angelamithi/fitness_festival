@@ -647,26 +647,27 @@ function renderSalesTable(data) {
   const start = (currentPage-1)*PER_PAGE, slice = data.slice(start, start+PER_PAGE);
   document.getElementById('salesCount').textContent = `${data.length} records`;
   document.getElementById('salesBody').innerHTML = slice.map(r=>{
-    const ids = (r.ticket_id||'').split(',');
-    const qty = r.quantity || ids.length || 1;
-    const idDisplay = ids.length > 1
-      ? ids.map(id=>`<div><span class="ticket-id">${id.trim()}</span></div>`).join('')
-      : `<span class="ticket-id">${ids[0]||''}</span>`;
-    return `<tr>
-      <td>${idDisplay}</td>
-      <td>${r.name}</td>
-      <td style="font-size:0.78rem;color:var(--muted);">${r.email}</td>
-      <td>${r.phone}</td>
-      <td>${r.ticket_type==='free'?'Free/Disabled':'Standard'}</td>
-      <td style="text-align:center;font-weight:600;">${qty}</td>
-      <td>${r.amount?'KSh '+r.amount.toLocaleString():'Free'}</td>
-      <td style="font-size:0.75rem;font-family:'Space Grotesk',sans-serif;color:var(--lime);">${r.mpesa_ref||'—'}</td>
-      <td><span class="badge ${r.status}">${r.status}</span></td>
-      <td style="color:var(--muted);font-size:0.75rem;">${new Date(r.created_at).toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'})}</td>
-      <td>
-        <button onclick="viewTicket('${r.ticket_id}')" style="background:none;border:1px solid var(--border);color:var(--lime);padding:0.25rem 0.6rem;border-radius:4px;font-size:0.72rem;cursor:pointer;">View</button>
-      </td>
-    </tr>`;
+    const ids = (r.ticket_id||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const qty = ids.length || 1;
+    const idDisplay = ids.map((id,i)=>
+      '<div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:'+(i<ids.length-1?'0.25rem':'0')+'">' +
+      '<span class="ticket-id">'+id+'</span>' +
+      (qty>1?'<span style="font-size:0.6rem;color:var(--muted);">#'+(i+1)+'</span>':'') +
+      '</div>'
+    ).join('');
+    return '<tr>' +
+      '<td>'+idDisplay+'</td>' +
+      '<td>'+r.name+'</td>' +
+      '<td style="font-size:0.78rem;color:var(--muted);">'+r.email+'</td>' +
+      '<td>'+r.phone+'</td>' +
+      '<td>'+(r.ticket_type==='free'?'Free/Disabled':'Standard')+'</td>' +
+      '<td style="text-align:center;font-weight:700;color:var(--lime);">'+qty+'</td>' +
+      '<td>'+(r.amount?'KSh '+r.amount.toLocaleString():'Free')+'</td>' +
+      '<td style="font-size:0.75rem;font-family:Space Grotesk,sans-serif;color:var(--lime);">'+(r.mpesa_ref||'—')+'</td>' +
+      '<td><span class="badge '+r.status+'">'+r.status+'</span></td>' +
+      '<td style="color:var(--muted);font-size:0.75rem;">'+new Date(r.created_at).toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'})+'</td>' +
+      '<td><button onclick="downloadTicket(\'' + r.ticket_id + '\')" style="background:var(--lime);color:var(--bg);border:none;padding:0.25rem 0.7rem;border-radius:4px;font-size:0.72rem;cursor:pointer;font-weight:600;">↓ Download</button></td>' +
+      '</tr>';
   }).join('') || '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:2rem;">No data</td></tr>';
 
   // Pagination
@@ -696,7 +697,7 @@ function renderRevenue() {
       <td><span class="ticket-id">${r.ticket_id}</span></td>
       <td>${r.name}</td>
       <td>KSh ${r.amount.toLocaleString()}</td>
-      <td style="font-family:'Space Grotesk',sans-serif;font-size:0.8rem;color:var(--lime);">${r.mpesa_ref||'—'}</td>
+      <td style="font-family:Space Grotesk,sans-serif;font-size:0.8rem;color:var(--lime);">${r.mpesa_ref||'—'}</td>
     </tr>
   `).join('');
   // Rev chart
@@ -730,7 +731,7 @@ function renderMpesa() {
       <td><span class="ticket-id">${r.ticket_id}</span></td>
       <td>${r.phone}</td>
       <td>KSh ${r.amount.toLocaleString()}</td>
-      <td style="font-size:0.72rem;font-family:'Space Grotesk',sans-serif;color:var(--muted);">${r.mpesa_ref||'—'}</td>
+      <td style="font-size:0.72rem;font-family:Space Grotesk,sans-serif;color:var(--muted);">${r.mpesa_ref||'—'}</td>
       <td style="font-size:0.8rem;">${r.status==='completed'?'0 (Success)':r.status==='pending'?'—':'1032 (Cancelled)'}</td>
       <td><span class="badge ${r.status}">${r.status}</span></td>
     </tr>
@@ -779,14 +780,68 @@ function exportCSV() {
 }
 
 // ── View ticket (simple alert for demo)
-function viewTicket(id) {
-  const t = getLiveData().find(r=>r.ticket_id===id);
-  if (!t) return;
-  const qty = t.quantity || (t.ticket_id||'').split(',').length || 1;
-  const msg = qty > 1
-    ? `${t.name} · ${qty} tickets · KSh ${t.amount.toLocaleString()} · ${t.status}`
-    : `${t.name} · ${t.phone} · ${t.status}`;
-  showToast(msg, 'info');
+function downloadTicket(ticketId) {
+  const t = getLiveData().find(r=>r.ticket_id===ticketId);
+  if (!t) { showToast('Ticket not found','error'); return; }
+
+  const ids = (t.ticket_id||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const qty = ids.length;
+
+  const ticketRows = ids.map((id, i) =>
+    '<tr style="border-bottom:1px solid rgba(184,212,50,0.15);">' +
+    '<td style="padding:0.6rem 0;color:#8a9e82;font-size:0.8rem;">Ticket ' + (qty>1?(i+1)+' of '+qty:'ID') + '</td>' +
+    '<td style="padding:0.6rem 0;font-family:monospace;color:#b8d432;font-size:0.9rem;">' + id + '</td>' +
+    '</tr>'
+  ).join('');
+
+  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"/>' +
+    '<title>Ticket — ' + t.name + '</title>' +
+    '<style>*{box-sizing:border-box;margin:0;padding:0;}' +
+    'body{background:#0d1f0f;color:#f5f5f0;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}' +
+    '.card{background:#1a2e1c;border:1px solid rgba(184,212,50,0.3);border-radius:16px;padding:2.5rem;max-width:520px;width:100%;}' +
+    '.logo{font-size:2rem;color:#b8d432;font-weight:900;letter-spacing:0.05em;margin-bottom:0.25rem;}' +
+    '.sub{color:#8a9e82;font-size:0.78rem;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:2rem;}' +
+    '.label{color:#8a9e82;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.5rem;}' +
+    '.type{font-size:1.4rem;color:#b8d432;font-weight:700;margin-bottom:1.5rem;}' +
+    'table{width:100%;border-collapse:collapse;}' +
+    '.footer{margin-top:2rem;font-size:0.75rem;color:#8a9e82;text-align:center;border-top:1px solid rgba(184,212,50,0.15);padding-top:1rem;}' +
+    '@media print{body{background:#fff;}' +
+    '.card{border-color:#ccc;background:#fff;color:#000;}' +
+    '.logo{color:#3a7d30;}.type{color:#3a7d30;}.label{color:#666;}td{color:#000;}}' +
+    '</style></head><body>' +
+    '<div class="card">' +
+    '<div class="logo">FITNESS FESTIVAL 2026</div>' +
+    '<div class="sub">08 August 2026 · Nandi Bears Club, Nandi Hills</div>' +
+    '<div class="label">Ticket Type</div>' +
+    '<div class="type">' + (t.ticket_type==='free'?'FREE ACCESS':'STANDARD ENTRY') + (qty>1?' &nbsp;×&nbsp;'+qty:'') + '</div>' +
+    '<table>' +
+    '<tr style="border-bottom:1px solid rgba(184,212,50,0.15);">' +
+    '<td style="padding:0.6rem 0;color:#8a9e82;font-size:0.8rem;">Name</td>' +
+    '<td style="padding:0.6rem 0;font-weight:600;">' + t.name + '</td>' +
+    '</tr>' +
+    ticketRows +
+    '<tr style="border-bottom:1px solid rgba(184,212,50,0.15);">' +
+    '<td style="padding:0.6rem 0;color:#8a9e82;font-size:0.8rem;">Date</td>' +
+    '<td style="padding:0.6rem 0;">Saturday, 08 August 2026</td>' +
+    '</tr>' +
+    '<tr style="border-bottom:1px solid rgba(184,212,50,0.15);">' +
+    '<td style="padding:0.6rem 0;color:#8a9e82;font-size:0.8rem;">Gates Open</td>' +
+    '<td style="padding:0.6rem 0;">6:30 AM</td>' +
+    '</tr>' +
+    (t.mpesa_ref ? '<tr><td style="padding:0.6rem 0;color:#8a9e82;font-size:0.8rem;">M-Pesa Ref</td><td style="padding:0.6rem 0;font-family:monospace;">' + t.mpesa_ref + '</td></tr>' : '') +
+    (t.amount ? '<tr><td style="padding:0.6rem 0;color:#8a9e82;font-size:0.8rem;">Amount Paid</td><td style="padding:0.6rem 0;font-weight:600;">KSh ' + t.amount.toLocaleString() + '</td></tr>' : '') +
+    '</table>' +
+    '<div class="footer">Powered by Eastern Produce Kenya Limited · fitnessfestival.co.ke<br/>Present this ticket (or your ticket ID) at the gate for entry.</div>' +
+    '</div>' +
+    '<script>window.onload=function(){window.print();}<\/script>' +
+    '</body></html>';
+
+  const blob = new Blob([html], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ticket-' + t.name.replace(/\s+/g,'-').toLowerCase() + (qty>1?'-x'+qty:'') + '.html';
+  a.click();
+  showToast('Ticket downloaded!', 'success');
 }
 
 // ── Toast
