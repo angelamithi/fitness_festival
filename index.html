@@ -301,7 +301,11 @@
     .partner-card .partner-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.85rem; text-align: center; }
     .partner-card .partner-role { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-lime); text-align: center; }
     /* Athlete card */
-    .partner-card--athlete { border-color: rgba(184,212,50,0.35); width: 350px; }
+   .partner-card--athlete {
+  border-color: rgba(184,212,50,0.35);
+  width: 280px;
+  margin: 0;
+}
     .partner-card--athlete .partner-role { color: var(--accent-gold); }
     .partner-athlete-img { position: relative; width: 90px; height: 90px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-lime); flex-shrink: 0; }
     .partner-athlete-img img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
@@ -309,8 +313,10 @@
    .partners-athlete-row {
   display: flex;
   justify-content: center;
-  margin-top: 10rem;
+  align-items: center;
+  margin-top: 2rem;
 }
+
 
     /* ── TICKET SECTION ── */
     #tickets { background: var(--bg-mid); }
@@ -838,10 +844,13 @@
 </section>
 
 <!-- PARTNERS -->
+<!-- PARTNERS -->
 <section id="partners">
   <div class="section-inner">
     <div class="section-eyebrow reveal">Our Partners & Sponsors</div>
     <h2 class="section-title reveal">MADE POSSIBLE BY</h2>
+ 
+    <!-- Row 1: the three sponsor/partner cards -->
     <div class="partners-grid reveal">
       <div class="partner-card">
         <div class="partner-logo-img"><img src="epk-logo.png" alt="Eastern Produce Kenya" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🌿</span>'"/></div>
@@ -853,18 +862,15 @@
         <div class="partner-name">Equity Afya</div>
         <div class="partner-role">Health Partner</div>
       </div>
-      <!-- <div class="partner-card">
-        <div class="partner-logo-img"><img src="nandi.jpeg" alt="Nandi County Government" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🏛️</span>'"/></div>
-        <div class="partner-name">Nandi County Government</div>
-        <div class="partner-role">Govt. Partner</div>
-      </div> -->
       <div class="partner-card">
         <div class="partner-logo-img"><img src="star_fitness.jpeg" alt="Starfit" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>⭐</span>'"/></div>
         <div class="partner-name">Starfit</div>
         <div class="partner-role">Fitness Partner</div>
       </div>
-    
     </div>
+ 
+    <!-- Row 2: Peris — completely separate row, properly centred -->
+    <div class="partners-athlete-row reveal">
       <div class="partner-card partner-card--athlete">
         <div class="partner-athlete-img">
           <img src="peris.jpeg" alt="Peris Jepchirchir" onerror="this.style.display='none'"/>
@@ -873,10 +879,10 @@
         <div class="partner-name">Peris Jepchirchir</div>
         <div class="partner-role">Brand Ambassador · Long Distance Athlete</div>
       </div>
+    </div>
+ 
   </div>
 </section>
-
-
 
 <!-- FOOTER -->
 <footer>
