@@ -110,6 +110,9 @@
     .ticket-opt.selected, .ticket-opt:hover { border-color: var(--accent-lime); }
     .ticket-opt.selected { background: rgba(184,212,50,0.08); }
     .ticket-opt input[type=radio] { display: none; }
+    .ticket-opt--info { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: var(--radius); padding: 1rem 1.25rem; cursor: not-allowed; opacity: 0.65; position: relative; }
+    .ticket-opt--info .ticket-opt-price { color: var(--accent-gold); }
+    .ticket-opt--info-badge { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(232,200,64,0.12); color: var(--accent-gold); border: 1px solid rgba(232,200,64,0.25); padding: 0.15rem 0.5rem; border-radius: 3px; margin-top: 0.25rem; display: inline-block; width: fit-content; }
     .ticket-opt-label { font-weight: 600; font-size: 0.95rem; }
     .ticket-opt-sublabel { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
     .ticket-opt-price { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--accent-lime); }
@@ -118,6 +121,16 @@
     .ticket-form-field label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); display: block; margin-bottom: 0.4rem; }
     .ticket-form-field input { width: 100%; background: var(--bg-mid); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius); padding: 0.75rem 1rem; color: var(--text-white); font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
     .ticket-form-field input:focus { border-color: var(--accent-lime); }
+    .disability-info-note {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      background: rgba(184,212,50,0.05); border: 1px solid rgba(184,212,50,0.2);
+      border-radius: var(--radius); padding: 0.9rem 1.1rem;
+      font-size: 0.8rem; color: var(--text-muted); line-height: 1.55;
+    }
+    .disability-info-note span { font-size: 1.3rem; flex-shrink: 0; margin-top: 0.05rem; }
+    .disability-info-note strong { color: var(--text-white); display: block; margin-bottom: 0.2rem; font-size: 0.82rem; }
+    .disability-info-note a { color: var(--accent-lime); text-decoration: none; font-weight: 600; white-space: nowrap; }
+    .disability-info-note a:hover { text-decoration: underline; }
     .mpesa-note { display: flex; align-items: center; gap: 0.5rem; background: rgba(58,125,48,0.18); border: 1px solid rgba(58,125,48,0.35); border-radius: var(--radius); padding: 0.75rem 1rem; font-size: 0.8rem; color: #90d080; margin-bottom: 1.25rem; }
     .btn-ticket { width: 100%; background: var(--accent-lime); color: var(--bg-dark); padding: 1rem; border-radius: var(--radius); font-weight: 700; font-size: 1rem; letter-spacing: 0.06em; text-transform: uppercase; border: none; cursor: pointer; transition: all 0.2s; font-family: 'Space Grotesk', sans-serif; }
     .btn-ticket:hover { background: var(--accent-gold); transform: translateY(-1px); }
@@ -471,11 +484,14 @@
           <div><div class="ticket-opt-label">Standard Entry</div><div class="ticket-opt-sublabel">Full day access to all activities</div></div>
           <div class="ticket-opt-price">KSh 1,000</div>
         </label>
-        <label class="ticket-opt" onclick="selectTicket(this,'disabled','FREE',0)">
-          <input type="radio" name="ticket" value="disabled"/>
-          <div><div class="ticket-opt-label">Disabled Access</div><div class="ticket-opt-sublabel">Complimentary — valid ID required</div></div>
+        <div class="ticket-opt--info" title="Disability access is free — present valid documentation at the gate. No online booking required.">
+          <div>
+            <div class="ticket-opt-label">Disability &amp; Special Needs Access</div>
+            <div class="ticket-opt-sublabel">Present valid documentation at the gate</div>
+            <div class="ticket-opt--info-badge">♿ Gate access only — no online booking</div>
+          </div>
           <div class="ticket-opt-price free">FREE</div>
-        </label>
+        </div>
       </div>
       <div class="ticket-form-field"><label>Full Name</label><input type="text" id="buyerName" placeholder="John Doe"/></div>
       <div class="ticket-form-field"><label>M-Pesa Phone Number</label><input type="tel" id="buyerPhone" placeholder="0712 345 678"/></div>
@@ -760,7 +776,7 @@
         <p class="section-sub">Secure your spot at The Fitness Festival 2026. Pay instantly with M-Pesa — no queues, no cash.</p>
         <div class="ticket-feature"><div class="ticket-feature-icon">📲</div><div><h5>M-Pesa STK Push</h5><p>Enter your Safaricom number and receive an instant payment prompt on your phone.</p></div></div>
         <div class="ticket-feature"><div class="ticket-feature-icon">✉️</div><div><h5>Instant Confirmation</h5><p>Receive your e-ticket via email immediately after payment is confirmed.</p></div></div>
-        <div class="ticket-feature"><div class="ticket-feature-icon">♿</div><div><h5>Free Disabled Access</h5><p>Complimentary entry for persons with disabilities. Present valid documentation at the gate.</p></div></div>
+        <div class="ticket-feature"><div class="ticket-feature-icon">♿</div><div><h5>Disability &amp; Special Needs</h5><p>Free services available on the day — no ticket required. Pre-register via local health workers, hospitals, or schools before the event.</p></div></div>
         <div class="ticket-feature"><div class="ticket-feature-icon">🔒</div><div><h5>Secure & Instant</h5><p>All transactions processed via Safaricom's official M-Pesa Daraja API. Safe and verified.</p></div></div>
       </div>
       <div class="ticket-card reveal">
@@ -771,11 +787,14 @@
             <div><div class="ticket-opt-label">Standard Entry</div><div class="ticket-opt-sublabel">Full day — all activities</div></div>
             <div class="ticket-opt-price">KSh 1,000</div>
           </label>
-          <label class="ticket-opt" onclick="selectTicket(this,'disabled','FREE',0)">
-            <input type="radio" name="ticket2" value="disabled"/>
-            <div><div class="ticket-opt-label">Disabled Access</div><div class="ticket-opt-sublabel">Complimentary ticket</div></div>
-            <div class="ticket-opt-price free">FREE</div>
-          </label>
+          <div class="disability-info-note">
+            <span>♿</span>
+            <div>
+              <strong>Disability &amp; Special Needs?</strong>
+              Free services are available on the day — no ticket needed. Pre-register through your local health worker, hospital, or school.
+              <a href="#disability">Learn more ↓</a>
+            </div>
+          </div>
         </div>
         <div class="ticket-form-field"><label>Full Name</label><input type="text" id="buyerName2" placeholder="Your full name"/></div>
         <div class="ticket-form-field"><label>M-Pesa Phone Number</label><input type="tel" id="buyerPhone2" placeholder="0712 345 678"/></div>
@@ -797,6 +816,11 @@
     <h2 class="section-title reveal">MADE POSSIBLE BY</h2>
     <div class="partners-grid reveal">
       <div class="partner-card">
+        <div class="partner-logo-img"><img src="YOUR_EPK_LOGO.png" alt="Eastern Produce Kenya" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🌿</span>'"/></div>
+        <div class="partner-name">Eastern Produce Kenya</div>
+        <div class="partner-role">Title Sponsor</div>
+      </div>
+      <div class="partner-card">
         <div class="partner-logo-img"><img src="YOUR_EQUITY_AFYA_LOGO.png" alt="Equity Afya" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🏥</span>'"/></div>
         <div class="partner-name">Equity Afya</div>
         <div class="partner-role">Health Partner</div>
@@ -805,11 +829,6 @@
         <div class="partner-logo-img"><img src="YOUR_GOVT_LOGO.png" alt="Nandi County Government" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🏛️</span>'"/></div>
         <div class="partner-name">Nandi County Government</div>
         <div class="partner-role">Govt. Partner</div>
-      </div>
-      <div class="partner-card">
-        <div class="partner-logo-img"><img src="YOUR_EPK_LOGO.png" alt="Eastern Produce Kenya" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🌿</span>'"/></div>
-        <div class="partner-name">Eastern Produce Kenya</div>
-        <div class="partner-role">Title Sponsor</div>
       </div>
       <div class="partner-card">
         <div class="partner-logo-img"><img src="YOUR_STARFIT_LOGO.png" alt="Starfit" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>⭐</span>'"/></div>
