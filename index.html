@@ -371,8 +371,13 @@
     .disability-targets { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
     .disability-targets h3 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 1.25rem; color: var(--accent-lime); }
     .disability-targets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
-    .disability-target-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: var(--bg-mid); border-radius: var(--radius); font-size: 0.875rem; color: var(--text-muted); }
-    .disability-target-item strong { color: var(--accent-gold); font-family: 'Space Grotesk', sans-serif; white-space: nowrap; }
+    .disability-target-item { display: grid; grid-template-columns: 1.8rem 1fr auto; align-items: center; gap: 0.6rem; padding: 0.85rem 1rem; background: var(--bg-mid); border-radius: var(--radius); }
+    .dt-icon { font-size: 1.2rem; text-align: center; }
+    .dt-label { font-size: 0.825rem; color: var(--text-muted); line-height: 1.3; }
+    .dt-count { color: var(--accent-gold); font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem; white-space: nowrap; text-align: right; }
+    .disability-bullets { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; padding: 0; margin: 0; }
+    .disability-bullets li { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.83rem; color: var(--text-muted); line-height: 1.5; }
+    .disability-bullets li::before { content: '✓'; color: var(--accent-lime); font-weight: 700; flex-shrink: 0; margin-top: 0.05rem; }
     .disability-geo { background: rgba(184,212,50,0.06); border: 1px solid var(--border); border-radius: 12px; padding: 1.75rem; }
     .disability-geo h3 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 1rem; }
     .disability-geo ul { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
@@ -635,25 +640,42 @@
         <div class="disability-card-icon">👂</div>
         <div class="disability-free-tag">✓ FREE Service</div>
         <h4>Hearing Aids</h4>
-        <p>Distributed free of charge to community members — children and adults — identified with hearing impairments. Qualified audiologists will conduct assessments on the day and fit appropriate hearing aids. Pre-registration encouraged through schools for the deaf, community health workers, and local hospitals.</p>
+        <ul class="disability-bullets">
+          <li>Free hearing aids for children &amp; adults with hearing impairments</li>
+          <li>On-site assessments by qualified audiologists</li>
+          <li>Pre-registration via schools, community health workers &amp; hospitals</li>
+        </ul>
       </div>
       <div class="disability-card reveal">
         <div class="disability-card-icon">🦯</div>
         <div class="disability-free-tag">✓ FREE Service</div>
         <h4>White Canes</h4>
-        <p>Provided free to persons with visual impairments. These mobility tools are essential for safe and independent navigation, often inaccessible to low-income families in rural communities. Distribution coordinated through the Kenya Union of the Blind and local community health units.</p>
+        <ul class="disability-bullets">
+          <li>Free white canes for persons with visual impairments</li>
+          <li>Essential for safe, independent navigation in rural areas</li>
+          <li>Distribution via Kenya Union of the Blind &amp; local health units</li>
+        </ul>
       </div>
       <div class="disability-card reveal">
         <div class="disability-card-icon">♿</div>
         <div class="disability-free-tag">✓ FREE Service</div>
         <h4>Wheelchairs</h4>
-        <p>Donated to persons — including children — with mobility challenges. Beneficiaries pre-screened through referrals from hospitals, schools, and community health workers across Nandi County. The event facilitates proper fitting and basic mobility training, with follow-up physiotherapy referrals.</p>
+        <ul class="disability-bullets">
+          <li>Free wheelchairs for adults &amp; children with mobility challenges</li>
+          <li>Beneficiaries pre-screened via hospitals, schools &amp; health workers</li>
+          <li>On-site fitting, mobility training &amp; follow-up physiotherapy referrals</li>
+        </ul>
       </div>
       <div class="disability-card reveal">
         <div class="disability-card-icon">🩺</div>
         <div class="disability-free-tag">✓ FREE Service</div>
         <h4>Physiotherapy Services</h4>
-        <p>A dedicated physiotherapy clinic staffed by a minimum of two (2) licensed physiotherapists. Services include musculoskeletal assessments, therapeutic exercise, mobility and gait training, pain management guidance, and written referral letters. Special focus on children with cerebral palsy, developmental delays, and post-surgical conditions.</p>
+        <ul class="disability-bullets">
+          <li>Dedicated clinic staffed by 2+ licensed physiotherapists</li>
+          <li>Musculoskeletal assessments, mobility &amp; gait training, pain management</li>
+          <li>Special focus: cerebral palsy, developmental delays &amp; post-surgical conditions</li>
+          <li>Written referral letters &amp; home exercise guidance for caregivers</li>
+        </ul>
       </div>
     </div>
 
@@ -661,10 +683,26 @@
     <div class="disability-targets reveal">
       <h3>🎯 Target Beneficiaries for Assistive Devices &amp; Physiotherapy</h3>
       <div class="disability-targets-grid">
-        <div class="disability-target-item"><span>👂 Children with hearing impairments</span><strong>20–30 recipients</strong></div>
-        <div class="disability-target-item"><span>🦯 Persons with visual impairments</span><strong>20–30 recipients</strong></div>
-        <div class="disability-target-item"><span>♿ Persons with mobility challenges</span><strong>10–20 recipients</strong></div>
-        <div class="disability-target-item"><span>🩺 Physiotherapy beneficiaries</span><strong>50–100 persons</strong></div>
+        <div class="disability-target-item">
+          <span class="dt-icon">👂</span>
+          <span class="dt-label">Children with hearing impairments</span>
+          <strong class="dt-count">20–30</strong>
+        </div>
+        <div class="disability-target-item">
+          <span class="dt-icon">🦯</span>
+          <span class="dt-label">Persons with visual impairments</span>
+          <strong class="dt-count">20–30</strong>
+        </div>
+        <div class="disability-target-item">
+          <span class="dt-icon">♿</span>
+          <span class="dt-label">Persons with mobility challenges</span>
+          <strong class="dt-count">10–20</strong>
+        </div>
+        <div class="disability-target-item">
+          <span class="dt-icon">🩺</span>
+          <span class="dt-label">Physiotherapy beneficiaries</span>
+          <strong class="dt-count">50–100</strong>
+        </div>
       </div>
       <div class="disability-note">
         Pre-registration for assistive device distribution will open from June 1, 2026. Community health workers, schools for children with special needs, hospitals, and disability organisations will be engaged to identify and refer eligible beneficiaries in advance of the event.
