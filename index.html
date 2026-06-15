@@ -118,6 +118,14 @@
     .ticket-opt-price { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--accent-lime); }
     .ticket-opt-price.free { color: var(--accent-gold); }
     .ticket-form-field { margin-bottom: 1rem; }
+    .qty-row { display: flex; align-items: center; gap: 0.75rem; background: var(--bg-mid); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem 1.25rem; margin-bottom: 1rem; }
+    .qty-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); flex: 1; }
+    .qty-controls { display: flex; align-items: center; gap: 0.5rem; }
+    .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-white); font-size: 1.1rem; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.18s; }
+    .qty-btn:hover { background: var(--accent-lime); color: var(--bg-dark); border-color: var(--accent-lime); }
+    .qty-num { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.1rem; min-width: 2rem; text-align: center; }
+    .qty-total { font-size: 0.78rem; color: var(--text-muted); text-align: right; margin-top: 0.5rem; margin-bottom: 0.75rem; }
+    .qty-total strong { color: var(--accent-lime); font-family: 'Space Grotesk', sans-serif; }
     .ticket-form-field label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); display: block; margin-bottom: 0.4rem; }
     .ticket-form-field input { width: 100%; background: var(--bg-mid); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius); padding: 0.75rem 1rem; color: var(--text-white); font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
     .ticket-form-field input:focus { border-color: var(--accent-lime); }
@@ -486,12 +494,21 @@
           <div class="ticket-opt-price free" style="flex-shrink:0;">FREE</div>
         </div>
       </div>
-      <div class="ticket-form-field"><label>Full Name</label><input type="text" id="buyerName" placeholder="John Doe"/></div>
+      <div class="qty-row">
+        <div class="qty-label">Number of Tickets</div>
+        <div class="qty-controls">
+          <button class="qty-btn" onclick="changeQty('qty1',-1)">−</button>
+          <div class="qty-num" id="qty1">1</div>
+          <button class="qty-btn" onclick="changeQty('qty1',1)">+</button>
+        </div>
+      </div>
+      <div class="qty-total" id="qty1-total">Total: <strong>KSh 1,000</strong></div>
+      <div class="ticket-form-field"><label>Your Full Name</label><input type="text" id="buyerName" placeholder="John Doe"/></div>
       <div class="ticket-form-field"><label>M-Pesa Phone Number</label><input type="tel" id="buyerPhone" placeholder="0712 345 678"/></div>
-      <div class="ticket-form-field"><label>Email Address</label><input type="email" id="buyerEmail" placeholder="john@email.com"/></div>
+      <div class="ticket-form-field"><label>Your Email (receives all tickets)</label><input type="email" id="buyerEmail" placeholder="john@email.com"/></div>
       <div class="mpesa-note">
         <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        An M-Pesa STK push will be sent to your phone to complete payment.
+        STK push sent to your phone. Each ticket gets its own ID.
       </div>
       <button class="btn-ticket" onclick="initiatePurchase()">Pay via M-Pesa →</button>
     </div>
@@ -789,12 +806,21 @@
             <div class="ticket-opt-price free" style="flex-shrink:0;">FREE</div>
           </div>
         </div>
-        <div class="ticket-form-field"><label>Full Name</label><input type="text" id="buyerName2" placeholder="Your full name"/></div>
+        <div class="qty-row">
+          <div class="qty-label">Number of Tickets</div>
+          <div class="qty-controls">
+            <button class="qty-btn" onclick="changeQty('qty2',-1)">−</button>
+            <div class="qty-num" id="qty2">1</div>
+            <button class="qty-btn" onclick="changeQty('qty2',1)">+</button>
+          </div>
+        </div>
+        <div class="qty-total" id="qty2-total">Total: <strong>KSh 1,000</strong></div>
+        <div class="ticket-form-field"><label>Your Full Name</label><input type="text" id="buyerName2" placeholder="Your full name"/></div>
         <div class="ticket-form-field"><label>M-Pesa Phone Number</label><input type="tel" id="buyerPhone2" placeholder="0712 345 678"/></div>
-        <div class="ticket-form-field"><label>Email Address</label><input type="email" id="buyerEmail2" placeholder="your@email.com"/></div>
+        <div class="ticket-form-field"><label>Your Email (receives all tickets)</label><input type="email" id="buyerEmail2" placeholder="your@email.com"/></div>
         <div class="mpesa-note">
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          STK push sent to your Safaricom number to complete payment securely.
+          STK push sent to your phone. Each ticket gets its own unique ID.
         </div>
         <button class="btn-ticket" onclick="initiatePurchase2()">Pay via M-Pesa →</button>
       </div>
@@ -841,7 +867,6 @@
 </section>
 
 
-
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
@@ -884,6 +909,26 @@
   // ── State
   let selectedTicket = { type:'standard', label:'KSh 1,000', amount:1000 };
   let currentOrderId = null;
+  const MAX_QTY = 10;
+
+  // ── Quantity controls
+  function changeQty(id, delta) {
+    const el = document.getElementById(id);
+    let val = parseInt(el.textContent) + delta;
+    val = Math.max(1, Math.min(MAX_QTY, val));
+    el.textContent = val;
+    updateQtyTotal(id);
+  }
+  function getQty(id) { return parseInt(document.getElementById(id)?.textContent || '1'); }
+  function updateQtyTotal(id) {
+    const qty   = getQty(id);
+    const price = selectedTicket.amount;
+    const total = price * qty;
+    const el    = document.getElementById(id + '-total');
+    if (el) el.innerHTML = qty > 1
+      ? '<span>' + qty + ' tickets × KSh ' + price.toLocaleString() + ' = </span><strong>KSh ' + total.toLocaleString() + '</strong>'
+      : 'Total: <strong>KSh ' + total.toLocaleString() + '</strong>';
+  }
 
   // ── Video toggle
   function toggleVideoAudio() {
@@ -904,6 +949,8 @@
     document.querySelectorAll('.ticket-opt').forEach(o => o.classList.remove('selected'));
     el.classList.add('selected');
     selectedTicket = { type, label, amount };
+    updateQtyTotal('qty1');
+    updateQtyTotal('qty2');
   }
 
   // ── Countdown
@@ -947,10 +994,10 @@
     return { name, phone: phone.replace(/\s/g,''), email };
   }
 
-  async function initiatePurchase()  { const d=validateForm('buyerName','buyerPhone','buyerEmail');  if(d) await doCheckout(d); }
-  async function initiatePurchase2() { const d=validateForm('buyerName2','buyerPhone2','buyerEmail2'); if(d) await doCheckout(d); }
+  async function initiatePurchase()  { const d=validateForm('buyerName','buyerPhone','buyerEmail');  if(d) await doCheckout(d, getQty('qty1')); }
+  async function initiatePurchase2() { const d=validateForm('buyerName2','buyerPhone2','buyerEmail2'); if(d) await doCheckout(d, getQty('qty2')); }
 
-  async function doCheckout(data) {
+  async function doCheckout(data, quantity=1) {
     if (selectedTicket.amount === 0) {
       try {
         const res = await fetch(API_BASE + '/api/register-free',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...data,ticketType:selectedTicket.type}) });
@@ -961,11 +1008,12 @@
     }
     try {
       showToast('Initiating M-Pesa payment...','info');
-      const res = await fetch(API_BASE + '/api/mpesa/stk-push',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...data,amount:selectedTicket.amount,ticketType:selectedTicket.type}) });
+      const totalAmount = selectedTicket.amount * quantity;
+      const res = await fetch(API_BASE + '/api/mpesa/stk-push',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...data,amount:totalAmount,ticketType:selectedTicket.type,quantity}) });
       const json = await res.json();
       if (json.success) {
         currentOrderId = json.order_id;
-        openPayModal(data.phone, selectedTicket.label);
+        openPayModal(data.phone, selectedTicket.label, quantity);
         // In sandbox: simulate payment immediately (no real phone available).
         // In production: customer receives a real PIN prompt — nothing to simulate.
         if (IS_SANDBOX) simulateSandboxPayment(json.order_id);
@@ -974,9 +1022,9 @@
     } catch(e) { showToast('Network error. Try again.','error'); }
   }
 
-  function openPayModal(phone,amt) {
+  function openPayModal(phone, amt, qty=1) {
     document.getElementById('modalPhone').textContent = phone;
-    document.getElementById('modalAmt').textContent = amt;
+    document.getElementById('modalAmt').textContent = qty > 1 ? `${qty} × ${amt} = KSh ${(selectedTicket.amount * qty).toLocaleString()}` : amt;
     document.getElementById('payStatus').className = 'status-badge pending pulse';
     document.getElementById('payStatus').textContent = '⏳ Awaiting payment...';
     document.getElementById('checkBtn').textContent = 'Check Payment Status';
