@@ -301,11 +301,16 @@
     .partner-card .partner-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.85rem; text-align: center; }
     .partner-card .partner-role { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-lime); text-align: center; }
     /* Athlete card */
-    .partner-card--athlete { border-color: rgba(184,212,50,0.35); min-width: 180px; flex-basis: 100%; max-width: 260px; margin: 0 auto; }
+    .partner-card--athlete { border-color: rgba(184,212,50,0.35); min-width: 180px; }
     .partner-card--athlete .partner-role { color: var(--accent-gold); }
     .partner-athlete-img { position: relative; width: 90px; height: 90px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-lime); flex-shrink: 0; }
     .partner-athlete-img img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
     .partner-athlete-fallback { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; font-size: 2.5rem; background: var(--bg-mid); }
+    .partners-athlete-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
 
     /* ── TICKET SECTION ── */
     #tickets { background: var(--bg-mid); }
@@ -858,6 +863,8 @@
         <div class="partner-name">Starfit</div>
         <div class="partner-role">Fitness Partner</div>
       </div>
+    
+    </div>
       <div class="partner-card partner-card--athlete">
         <div class="partner-athlete-img">
           <img src="peris.jpeg" alt="Peris Jepchirchir" onerror="this.style.display='none'"/>
@@ -866,7 +873,6 @@
         <div class="partner-name">Peris Jepchirchir</div>
         <div class="partner-role">Brand Ambassador · Long Distance Athlete</div>
       </div>
-    </div>
   </div>
 </section>
 
