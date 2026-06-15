@@ -418,6 +418,7 @@
 <nav>
   <div class="nav-logo">
     <img src="logo.jpeg" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
+
     <div class="nav-logo-text">FITNESS FESTIVAL <span>Powered by Eastern Produce Kenya</span></div>
   </div>
   <ul class="nav-links">
@@ -867,6 +868,7 @@
 </section>
 
 
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
@@ -1030,7 +1032,25 @@
     document.getElementById('checkBtn').textContent = 'Check Payment Status';
     document.getElementById('payModal').classList.add('open');
   }
-  function closeModal() { document.getElementById('payModal').classList.remove('open'); currentOrderId=null; }
+  function clearForms() {
+    ['buyerName','buyerPhone','buyerEmail','buyerName2','buyerPhone2','buyerEmail2'].forEach(id=>{
+      const el = document.getElementById(id); if(el) el.value='';
+    });
+    // Reset qty selectors back to 1
+    ['qty1','qty2'].forEach(id=>{
+      const el = document.getElementById(id); if(el) el.textContent='1';
+    });
+    updateQtyTotal('qty1');
+    updateQtyTotal('qty2');
+    // Reset ticket selection to standard
+    document.querySelectorAll('.ticket-opt').forEach(o=>o.classList.remove('selected'));
+    const first = document.querySelector('.ticket-opt'); if(first) first.classList.add('selected');
+    selectedTicket = { type:'standard', label:'KSh 1,000', amount:1000 };
+  }
+  function closeModal() {
+    document.getElementById('payModal').classList.remove('open');
+    currentOrderId = null;
+  }
 
   // Sandbox helper — triggers a fake successful callback from Safaricom
   async function simulateSandboxPayment(orderId) {
@@ -1054,7 +1074,7 @@
       const res = await fetch(API_BASE + `/api/mpesa/status/${currentOrderId}`);
       const json = await res.json();
       const badge = document.getElementById('payStatus');
-      if (json.status==='completed') { badge.className='status-badge success'; badge.textContent='✅ Payment confirmed!'; document.getElementById('checkBtn').textContent='Done ✓'; showToast('🎉 Confirmed! Check your email for your ticket.','success'); setTimeout(closeModal,3000); }
+      if (json.status==='completed') { badge.className='status-badge success'; badge.textContent='✅ Payment confirmed!'; document.getElementById('checkBtn').textContent='Done ✓'; showToast('🎉 Confirmed! Check your email for your ticket.','success'); setTimeout(()=>{ closeModal(); clearForms(); },3000); }
       else if (json.status==='failed') { badge.className='status-badge error'; badge.textContent='❌ Payment failed'; document.getElementById('checkBtn').textContent='Retry'; showToast('Payment not completed. Please try again.','error'); }
       else { badge.className='status-badge pending pulse'; badge.textContent='⏳ Still waiting...'; document.getElementById('checkBtn').textContent='Check Again'; }
     } catch(e) { showToast('Could not check status.','error'); document.getElementById('checkBtn').textContent='Check Payment Status'; }

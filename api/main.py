@@ -196,6 +196,25 @@ def send_ticket_email(ticket: dict, all_ticket_ids: list = None) -> None:
                  f'<td style="padding:0.5rem 0;font-family:monospace;">{ticket.get("mpesa_ref","")}</td></tr>'
                  if ticket.get("mpesa_ref") else "")
 
+    # Build ticket ID rows — one per ticket for bulk orders
+    ids_list      = all_ticket_ids if all_ticket_ids else [ticket["ticket_id"]]
+    quantity      = len(ids_list)
+    ticket_header = f"Your {quantity} Tickets" if quantity > 1 else "Your Ticket"
+    label_line    = f"{label}  ×{quantity}" if quantity > 1 else label
+
+    id_rows = "".join(
+        f'<tr><td style="padding:0.45rem 0;color:#8a9e82;font-size:0.8rem;">' +
+        (f"Ticket {i+1} of {quantity}" if quantity > 1 else "Ticket ID") +
+        f'</td><td style="padding:0.45rem 0;font-family:monospace;color:#b8d432;">{tid}</td></tr>'
+        for i, tid in enumerate(ids_list)
+    )
+
+    bulk_note = (
+        '<div style="background:#142418;border-radius:8px;padding:1rem;font-size:0.82rem;color:#8a9e82;margin-top:1rem;">' +
+        f'Each of the {quantity} ticket IDs above grants one person entry. Present any ID at the gate.' +
+        '</div>'
+    ) if quantity > 1 else ""
+
     html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
 <body style="background:#0d1f0f;color:#f5f5f0;font-family:Arial,sans-serif;padding:2rem;max-width:560px;margin:0 auto;">
   <div style="text-align:center;margin-bottom:2rem;">
@@ -203,15 +222,16 @@ def send_ticket_email(ticket: dict, all_ticket_ids: list = None) -> None:
     <p style="color:#8a9e82;font-size:0.85rem;letter-spacing:0.15em;text-transform:uppercase;">08 August 2026 · Nandi Bears Club</p>
   </div>
   <div style="background:#1a2e1c;border:1px solid rgba(184,212,50,0.2);border-radius:12px;padding:2rem;margin-bottom:1.5rem;">
-    <p style="color:#8a9e82;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.25rem;">Your Ticket</p>
-    <h2 style="font-size:1.5rem;color:#b8d432;margin:0 0 1.5rem;">{label}</h2>
+    <p style="color:#8a9e82;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.25rem;">{ticket_header}</p>
+    <h2 style="font-size:1.5rem;color:#b8d432;margin:0 0 1.5rem;">{label_line}</h2>
     <table style="width:100%;border-collapse:collapse;">
       <tr><td style="padding:0.5rem 0;color:#8a9e82;">Name</td><td style="padding:0.5rem 0;font-weight:600;">{ticket["name"]}</td></tr>
-      <tr><td style="padding:0.5rem 0;color:#8a9e82;">Ticket ID</td><td style="padding:0.5rem 0;font-family:monospace;color:#b8d432;">{ticket["ticket_id"]}</td></tr>
+      {id_rows}
       <tr><td style="padding:0.5rem 0;color:#8a9e82;">Date</td><td style="padding:0.5rem 0;">Saturday, 08 August 2026</td></tr>
       <tr><td style="padding:0.5rem 0;color:#8a9e82;">Venue</td><td style="padding:0.5rem 0;">Nandi Bears Club, Nandi Hills</td></tr>
       {mpesa_row}
     </table>
+    {bulk_note}
   </div>
   <p style="color:#8a9e82;font-size:0.78rem;text-align:center;margin-top:1.5rem;">
     Powered by Eastern Produce Kenya Limited · Fitness Festival 2026<br/>
@@ -219,8 +239,10 @@ def send_ticket_email(ticket: dict, all_ticket_ids: list = None) -> None:
   </p>
 </body></html>"""
 
+    tickets_word  = "Tickets" if quantity > 1 else "Ticket"
+    subject_id    = f"{quantity} tickets" if quantity > 1 else ticket["ticket_id"]
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"✅ Your Ticket — Fitness Festival 2026 ({ticket['ticket_id']})"
+    msg["Subject"] = f"✅ Your {tickets_word} — Fitness Festival 2026 ({subject_id})"
     msg["From"]    = f'"Fitness Festival 2026" <{smtp_user}>'
     msg["To"]      = ticket["email"]
     msg.attach(MIMEText(html, "html"))
