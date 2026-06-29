@@ -293,8 +293,7 @@
     /* ── PARTNERS ── */
     #partners { background: var(--bg-dark); }
     .partners-grid { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; margin-top: 3rem; }
-    .partners-grid .partner-card--athlete { flex-basis: 100%; display: flex; flex-direction: column; align-items: center; max-width: 220px; margin: 0 auto; }
-    .partner-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2rem; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; min-width: 160px; transition: border-color 0.2s, transform 0.2s; }
+    .partner-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2rem; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; min-width: 160px; width: 280px; transition: border-color 0.2s, transform 0.2s; }
     .partner-card:hover { border-color: var(--accent-lime); transform: translateY(-2px); }
     .partner-card .partner-logo { font-size: 2.2rem; }
     .partner-logo-img { width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; }
@@ -302,11 +301,22 @@
     .partner-card .partner-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.85rem; text-align: center; }
     .partner-card .partner-role { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-lime); text-align: center; }
     /* Athlete card */
-    .partner-card--athlete { border-color: rgba(184,212,50,0.35); min-width: 180px; }
+   .partner-card--athlete {
+  border-color: rgba(184,212,50,0.35);
+  width: 420px;
+  margin: 0;
+}
     .partner-card--athlete .partner-role { color: var(--accent-gold); }
     .partner-athlete-img { position: relative; width: 90px; height: 90px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-lime); flex-shrink: 0; }
     .partner-athlete-img img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
     .partner-athlete-fallback { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; font-size: 2.5rem; background: var(--bg-mid); }
+   .partners-athlete-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2rem;
+}
+
 
     /* ── TICKET SECTION ── */
     #tickets { background: var(--bg-mid); }
@@ -418,13 +428,8 @@
 <!-- NAV -->
 <nav>
   <div class="nav-logo">
-    <div style="width:42px;height:42px;background:var(--accent-lime);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="15" cy="4.5" r="1.5" fill="#0d1f0f"/>
-        <path d="M9 8.5l3-2 2.5 3.5H18l-1 2h-3.5l-1 3.5L15 18l-1.5 1.5-2.5-4.5.5-3.5L9 10.5 7 13H4.5L6 10.5 9 8.5z" fill="#0d1f0f"/>
-        <path d="M6 19c3 0 5-1 7-3" stroke="#0d1f0f" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-    </div>
+    <img src="logo.jpeg" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
+
     <div class="nav-logo-text">FITNESS FESTIVAL <span>Powered by Eastern Produce Kenya</span></div>
   </div>
   <ul class="nav-links">
@@ -454,12 +459,13 @@
 <section id="hero">
   <!-- Video background — autoplay, muted, loops -->
   <div class="hero-video-wrap">
-    <video id="heroBgVideo" autoplay muted loop playsinline preload="none"
-      <!-- poster="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1600&q=80">
+   <video id="heroBgVideo" autoplay muted loop playsinline preload="auto">
+      <!-- poster="hero_image.jpeg"> -->
       <!-- Royalty-free fitness videos from Pexels CDN -->
-      <source src="https://videos.pexels.com/video-files/4761438/4761438-uhd_2560_1440_25fps.mp4" type="video/mp4"/>
+      <!-- <source src="https://videos.pexels.com/video-files/4761438/4761438-uhd_2560_1440_25fps.mp4" type="video/mp4"/>
       <source src="https://videos.pexels.com/video-files/3209828/3209828-uhd_2560_1440_25fps.mp4" type="video/mp4"/> -->
-      <source src="hero_video.mp4" type="video/mp4"/>
+      <!-- REPLACE THESE TWO LINES with your own video -->
+    <source src="hero_video.mp4" type="video/mp4"/>
     </video>
   </div>
   <div class="hero-overlay"></div>
@@ -475,7 +481,7 @@
       <p class="hero-subtitle">Nandi's premier fitness celebration — a day packed with energy, community, wellness challenges, and movement for every body.</p>
       <div class="hero-meta">
         <div class="hero-meta-item"><span class="hero-meta-label">Date</span><span class="hero-meta-value">08 August 2026</span></div>
-        <div class="hero-meta-item"><span class="hero-meta-label">Venue</span><span class="hero-meta-value">Nandi Hills Primary School</span></div>
+        <div class="hero-meta-item"><span class="hero-meta-label">Venue</span><span class="hero-meta-value">Nandi Bears Club</span></div>
         <div class="hero-meta-item"><span class="hero-meta-label">Starts</span><span class="hero-meta-value">7:00 AM</span></div>
       </div>
       <div class="hero-actions">
@@ -544,7 +550,7 @@
       </div>
     </div>
     <div style="text-align:right;">
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.14em;color:var(--text-muted);">August 08, 2026 · Nandi Hills Primary School</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.14em;color:var(--text-muted);">August 08, 2026 · Nandi Bears Club</div>
       <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--accent-lime);margin-top:0.25rem;">NANDI HILLS, KENYA</div>
     </div>
   </div>
@@ -575,7 +581,6 @@
   </div>
 </div>
 
-
 <!-- SCHEDULE -->
 <section id="schedule">
   <div class="section-inner">
@@ -591,21 +596,21 @@
         <p>Kick off the day with an energising community run. All fitness levels welcome — walk, jog, or race!</p>
       </div>
       <div class="sched-card reveal">
-        <div class="sched-card-bg" style="background-image:url('https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=70')"></div>
+        <div class="sched-card-bg" style="background-image:url('physio.png')"></div>
         <div class="sched-icon">🦵</div>
         <div class="sched-time">8:00 AM</div>
         <h4>Physiotherapy Activities</h4>
         <p>Expert-led mobility and recovery sessions. Understand your body, prevent injury, and move better.</p>
       </div>
       <div class="sched-card reveal">
-        <div class="sched-card-bg" style="background-image:url('https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=70')"></div>
+        <div class="sched-card-bg" style="background-image:url('zumba.png')"></div>
         <div class="sched-icon">💃</div>
         <div class="sched-time">9:00 AM</div>
         <h4>Aerobics & Zumba</h4>
         <p>High-energy cardio dance classes led by top instructors. Get your heart pumping and your hips moving!</p>
       </div>
       <div class="sched-card reveal">
-        <div class="sched-card-bg" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=70')"></div>
+        <div class="sched-card-bg" style="background-image:url('muscle.jpg')"></div>
         <div class="sched-icon">💪</div>
         <div class="sched-time">10:30 AM</div>
         <h4>Muscle Flexing & Fitness Challenge</h4>
@@ -626,7 +631,6 @@
   </div>
 </div>
 
-
 <!-- ACTIVITIES -->
 <section id="activities">
   <div class="section-inner">
@@ -635,7 +639,7 @@
     <p class="section-sub reveal">Running all day throughout the festival grounds — free for all ticket holders.</p>
     <div class="activities-grid">
       <div class="act-card reveal">
-        <div class="act-card-bg" style="background-image:url('https://images.unsplash.com/photo-1534258936925-c58bed479fcb?w=500&q=70')"></div>
+        <div class="act-card-bg" style="background-image:url('flex.png')"></div>
         <div class="act-icon">💪</div>
         <h4>Muscle Flexing</h4>
         <p>Drop-in bodyweight challenges and resistance training stations throughout the day.</p>
@@ -768,7 +772,7 @@
       <div class="venue-info reveal">
         <div class="venue-detail">
           <div class="venue-detail-icon">📍</div>
-          <div class="venue-detail-text"><h5>Nandi Hills Primary School</h5><p>Nandi Hills, Nandi County, Kenya<br/>Located within the school grounds in the scenic highlands of Nandi Hills — ample parking available on site.</p></div>
+          <div class="venue-detail-text"><h5>Nandi Bears Club</h5><p>Nandi Hills, Nandi County, Kenya<br/>Nestled in the scenic highlands of Nandi Hills — ample parking available on site.</p></div>
         </div>
         <div class="venue-detail">
           <div class="venue-detail-icon">📅</div>
@@ -778,10 +782,10 @@
           <div class="venue-detail-icon">👕</div>
           <div class="venue-detail-text"><h5>What to bring</h5><p>Your ticket confirmation, comfortable workout clothes, water bottle, and a smile.</p></div>
         </div>
-        <a href="https://maps.google.com/?q=Nandi+Hills+Primary+School,+Nandi+Hills,+Kenya" target="_blank" class="btn-outline" style="display:inline-flex;margin-top:0.5rem;">🗺 Open in Google Maps</a>
+        <a href="https://maps.google.com/?q=Nandi+Bears+Club,+Nandi+Hills,+Kenya" target="_blank" class="btn-outline" style="display:inline-flex;margin-top:0.5rem;">🗺 Open in Google Maps</a>
       </div>
       <div class="venue-map reveal">
-        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.6!2d35.1799!3d0.1005!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182a77f6e3a3b2c1%3A0x0!2sNandi+Hills+Primary+School%2C+Nandi+Hills%2C+Kenya!5e0!3m2!1sen!2ske!4v1700000000000!5m2!1sen!2ske" allowfullscreen loading="lazy"></iframe>
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.6!2d35.1799!3d0.1005!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182a77f6e3a3b2c1%3A0x0!2sNandi+Bears+Club%2C+Nandi+Hills%2C+Kenya!5e0!3m2!1sen!2ske!4v1700000000000!5m2!1sen!2ske" allowfullscreen loading="lazy"></iframe>
       </div>
     </div>
   </div>
@@ -840,56 +844,63 @@
 </section>
 
 <!-- PARTNERS -->
+<!-- PARTNERS -->
 <section id="partners">
   <div class="section-inner">
     <div class="section-eyebrow reveal">Our Partners & Sponsors</div>
     <h2 class="section-title reveal">MADE POSSIBLE BY</h2>
+ 
+    <!-- Row 1: the three sponsor/partner cards -->
     <div class="partners-grid reveal">
       <div class="partner-card">
-        <div class="partner-logo-img"><img src="YOUR_EPK_LOGO.png" alt="Eastern Produce Kenya" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🌿</span>'"/></div>
+        <div class="partner-logo-img"><img src="epk-logo.png" alt="Eastern Produce Kenya" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🌿</span>'"/></div>
         <div class="partner-name">Eastern Produce Kenya</div>
         <div class="partner-role">Title Sponsor</div>
       </div>
       <div class="partner-card">
-        <div class="partner-logo-img"><img src="YOUR_EQUITY_AFYA_LOGO.png" alt="Equity Afya" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🏥</span>'"/></div>
+        <div class="partner-logo-img"><img src="equity_afya.jpeg" alt="Equity Afya" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🏥</span>'"/></div>
         <div class="partner-name">Equity Afya</div>
         <div class="partner-role">Health Partner</div>
       </div>
       <div class="partner-card">
-        <div class="partner-logo-img"><img src="YOUR_GOVT_LOGO.png" alt="Nandi County Government" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🏛️</span>'"/></div>
-        <div class="partner-name">Nandi County Government</div>
-        <div class="partner-role">Govt. Partner</div>
-      </div>
-      <div class="partner-card">
-        <div class="partner-logo-img"><img src="YOUR_STARFIT_LOGO.png" alt="Starfit" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>⭐</span>'"/></div>
-        <div class="partner-name">Starfit</div>
+        <div class="partner-logo-img"><img src="star_fitness.jpeg" alt="Starfit" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>⭐</span>'"/></div>
+        <div class="partner-name">Starfit Gym</div>
         <div class="partner-role">Fitness Partner</div>
       </div>
+      <div class="partner-card">
+        <div class="partner-logo-img"><img src="afrivance_ai.jpeg" alt="Afrivance AI" onerror="this.parentElement.innerHTML='<span style=font-size:2rem>⭐</span>'"/></div>
+        <div class="partner-name">Afrivance AI</div>
+        <div class="partner-role">Tech Partner</div>
+      </div>
+    </div>
+ 
+    <!-- Row 2: Peris — completely separate row, properly centred -->
+    <div class="partners-athlete-row reveal">
       <div class="partner-card partner-card--athlete">
         <div class="partner-athlete-img">
-          <img src="peris.jpeg" alt="Peris Jepchirchir" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+          <img src="peris.jpeg" alt="Peris Jepchirchir" onerror="this.style.display='none'"/>
           <div class="partner-athlete-fallback">🏃‍♀️</div>
         </div>
         <div class="partner-name">Peris Jepchirchir</div>
         <div class="partner-role">Brand Ambassador · Long Distance Athlete</div>
       </div>
     </div>
+ 
   </div>
 </section>
-
-
 
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
     <div class="footer-logo">FITNESS FESTIVAL 2026</div>
     <p>Powered by Eastern Produce Kenya Limited</p>
-    <p style="margin-top:0.25rem;">08 August 2026 · Nandi Hills Primary School · Nandi Hills, Kenya</p>
+    <p style="margin-top:0.25rem;">08 August 2026 · Nandi Bears Club · Nandi Hills, Kenya</p>
     <div class="footer-links">
       <a href="#schedule">Schedule</a><a href="#tickets">Tickets</a>
       <a href="#venue">Venue</a><a href="/admin" class="admin-link">⚙ Admin</a>
     </div>
     <p style="margin-top:2rem;font-size:0.75rem;color:rgba(138,158,130,0.5);">© 2026 Eastern Produce Kenya Limited. All rights reserved.</p>
+    <p style="margin-top:0.5rem;font-size:0.72rem;color:rgba(138,158,130,0.35);">Website created by <a href="https://afrivance.ai" target="_blank" style="color:var(--accent-lime);opacity:0.6;text-decoration:none;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">Afrivance AI</a></p>
   </div>
 </footer>
 
@@ -921,7 +932,7 @@
   // ── State
   let selectedTicket = { type:'standard', label:'KSh 1,000', amount:1000 };
   let currentOrderId = null;
-  const MAX_QTY = 10;
+  const MAX_QTY = 100;
 
   // ── Quantity controls
   function changeQty(id, delta) {
