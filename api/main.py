@@ -13,6 +13,8 @@ import hashlib
 import hmac
 import ssl as ssl_lib
 import smtplib
+import io
+import qrcode
 from datetime import datetime, timezone, timedelta
 from typing import Optional, AsyncGenerator
 
@@ -209,9 +211,44 @@ def send_ticket_email(ticket: dict, all_ticket_ids: list = None) -> None:
         for i, tid in enumerate(ids_list)
     )
 
+    # Build one QR code block per ticket — scanned at the gate on event day.
+    # Generated server-side with the qrcode library, embedded as inline base64
+    # so the email has no dependency on any external image service.
+    def generate_qr_base64(data: str) -> str:
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=8,
+            border=2,
+        )
+        qr.add_data(data)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return base64.b64encode(buf.getvalue()).decode()
+
+    def qr_img_tag(tid: str) -> str:
+        try:
+            b64 = generate_qr_base64(tid)
+            src = f"data:image/png;base64,{b64}"
+        except Exception as e:
+            log.error(f"QR generation failed for {tid}: {e}")
+            # Fallback to external service if local generation ever fails
+            src = f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data={tid}"
+        return (
+            f'<div style="text-align:center;margin:0.75rem 0;">'
+            f'<img src="{src}" alt="QR code for {tid}" width="140" height="140" '
+            f'style="background:#fff;border-radius:8px;padding:6px;display:inline-block;"/>'
+            f'<div style="font-family:monospace;font-size:0.75rem;color:#b8d432;margin-top:0.4rem;">{tid}</div>'
+            f'</div>'
+        )
+
+    qr_blocks = "".join(qr_img_tag(tid) for tid in ids_list)
+
     bulk_note = (
         '<div style="background:#142418;border-radius:8px;padding:1rem;font-size:0.82rem;color:#8a9e82;margin-top:1rem;">' +
-        f'Each of the {quantity} ticket IDs above grants one person entry. Present any ID at the gate.' +
+        f'Each of the {quantity} ticket IDs above grants one person entry. Present any QR code at the gate.' +
         '</div>'
     ) if quantity > 1 else ""
 
@@ -219,7 +256,7 @@ def send_ticket_email(ticket: dict, all_ticket_ids: list = None) -> None:
 <body style="background:#0d1f0f;color:#f5f5f0;font-family:Arial,sans-serif;padding:2rem;max-width:560px;margin:0 auto;">
   <div style="text-align:center;margin-bottom:2rem;">
     <h1 style="font-size:2.5rem;color:#b8d432;margin:0;">FITNESS FESTIVAL</h1>
-    <p style="color:#8a9e82;font-size:0.85rem;letter-spacing:0.15em;text-transform:uppercase;">08 August 2026 · Nandi Bears Club</p>
+    <p style="color:#8a9e82;font-size:0.85rem;letter-spacing:0.15em;text-transform:uppercase;">08 August 2026 · Nandi Hills Primary School</p>
   </div>
   <div style="background:#1a2e1c;border:1px solid rgba(184,212,50,0.2);border-radius:12px;padding:2rem;margin-bottom:1.5rem;">
     <p style="color:#8a9e82;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.25rem;">{ticket_header}</p>
@@ -228,10 +265,16 @@ def send_ticket_email(ticket: dict, all_ticket_ids: list = None) -> None:
       <tr><td style="padding:0.5rem 0;color:#8a9e82;">Name</td><td style="padding:0.5rem 0;font-weight:600;">{ticket["name"]}</td></tr>
       {id_rows}
       <tr><td style="padding:0.5rem 0;color:#8a9e82;">Date</td><td style="padding:0.5rem 0;">Saturday, 08 August 2026</td></tr>
-      <tr><td style="padding:0.5rem 0;color:#8a9e82;">Venue</td><td style="padding:0.5rem 0;">Nandi Bears Club, Nandi Hills</td></tr>
+      <tr><td style="padding:0.5rem 0;color:#8a9e82;">Venue</td><td style="padding:0.5rem 0;">Nandi Hills Primary School, Nandi Hills</td></tr>
       {mpesa_row}
     </table>
     {bulk_note}
+    <div style="border-top:1px solid rgba(184,212,50,0.15);margin-top:1.25rem;padding-top:1.25rem;">
+      <p style="color:#8a9e82;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;text-align:center;margin-bottom:0.5rem;">Scan at the Gate</p>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;">
+        {qr_blocks}
+      </div>
+    </div>
   </div>
   <p style="color:#8a9e82;font-size:0.78rem;text-align:center;margin-top:1.5rem;">
     Powered by Eastern Produce Kenya Limited · Fitness Festival 2026<br/>
@@ -496,6 +539,32 @@ async def register_free(body: FreeTicketRequest, db: AsyncSession = Depends(get_
         log.error(f"Email failed: {e}")
         email_sent = False
     return {"success": True, "ticket_id": ticket_id, "email_sent": email_sent}
+
+
+@app.get("/api/qr/{ticket_id}")
+async def get_qr_code(ticket_id: str):
+    """
+    Generate a QR code for a given ticket ID, server-side.
+    Returns a PNG image directly — used by the admin dashboard's
+    download-ticket feature so it never depends on an external QR service.
+    """
+    from fastapi.responses import Response
+    try:
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=8,
+            border=2,
+        )
+        qr.add_data(ticket_id)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return Response(content=buf.getvalue(), media_type="image/png")
+    except Exception as e:
+        log.error(f"QR endpoint failed for {ticket_id}: {e}")
+        raise HTTPException(status_code=500, detail="Could not generate QR code.")
 
 
 @app.get("/api/health")

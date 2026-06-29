@@ -9,3 +9,4 @@ pydantic[email]==2.7.1     # Request validation + email validation
 asyncpg==0.29.0            # Async PostgreSQL driver
 sqlalchemy==2.0.30         # ORM / query builder
 alembic==1.13.1            # Database migrations
+qrcode[pil]==8.2           # Server-side QR code generation (no external service)

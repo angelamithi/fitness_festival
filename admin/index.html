@@ -441,7 +441,7 @@
         <div class="form-row">
           <div class="form-field"><label>Event Name</label><input value="The Fitness Festival 2026"/></div>
           <div class="form-field"><label>Event Date</label><input type="date" value="2026-08-08"/></div>
-          <div class="form-field"><label>Venue</label><input value="Nandi Bears Club, Nairobi"/></div>
+          <div class="form-field"><label>Venue</label><input value="Nandi Hills Primary School, Nandi Hills"/></div>
           <div class="form-field"><label>Total Ticket Capacity</label><input type="number" value="500"/></div>
           <div class="form-field"><label>Standard Ticket Price (KSh)</label><input type="number" value="1000"/></div>
           <div class="form-field"><label>Organiser Email</label><input value="info@fitnessfestival.co.ke"/></div>
@@ -802,6 +802,17 @@ function downloadTicket(ticketId) {
     '</tr>'
   ).join('');
 
+  // One QR code per ticket — generated server-side by our own backend
+  // (no dependency on any external QR image service).
+  const qrBlocks = ids.map(id =>
+    '<div style="text-align:center;margin:0.5rem;">' +
+    '<img src="' + API_BASE + '/api/qr/' + encodeURIComponent(id) + '" ' +
+    'alt="QR code for ' + id + '" width="140" height="140" ' +
+    'style="background:#fff;border-radius:8px;padding:6px;"/>' +
+    '<div style="font-family:monospace;font-size:0.72rem;color:#b8d432;margin-top:0.35rem;">' + id + '</div>' +
+    '</div>'
+  ).join('');
+
   const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"/>' +
     '<title>Ticket — ' + t.name + '</title>' +
     '<style>*{box-sizing:border-box;margin:0;padding:0;}' +
@@ -819,7 +830,7 @@ function downloadTicket(ticketId) {
     '</style></head><body>' +
     '<div class="card">' +
     '<div class="logo">FITNESS FESTIVAL 2026</div>' +
-    '<div class="sub">08 August 2026 · Nandi Bears Club, Nandi Hills</div>' +
+    '<div class="sub">08 August 2026 · Nandi Hills Primary School, Nandi Hills</div>' +
     '<div class="label">Ticket Type</div>' +
     '<div class="type">' + (t.ticket_type==='free'?'FREE ACCESS':'STANDARD ENTRY') + (qty>1?' &nbsp;×&nbsp;'+qty:'') + '</div>' +
     '<table>' +
@@ -839,7 +850,11 @@ function downloadTicket(ticketId) {
     (t.mpesa_ref ? '<tr><td style="padding:0.6rem 0;color:#8a9e82;font-size:0.8rem;">M-Pesa Ref</td><td style="padding:0.6rem 0;font-family:monospace;">' + t.mpesa_ref + '</td></tr>' : '') +
     (t.amount ? '<tr><td style="padding:0.6rem 0;color:#8a9e82;font-size:0.8rem;">Amount Paid</td><td style="padding:0.6rem 0;font-weight:600;">KSh ' + t.amount.toLocaleString() + '</td></tr>' : '') +
     '</table>' +
-    '<div class="footer">Powered by Eastern Produce Kenya Limited · fitnessfestival.co.ke<br/>Present this ticket (or your ticket ID) at the gate for entry.</div>' +
+    '<div style="border-top:1px solid rgba(184,212,50,0.15);margin-top:1.25rem;padding-top:1.25rem;">' +
+    '<p style="color:#8a9e82;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;text-align:center;margin-bottom:0.5rem;">Scan at the Gate</p>' +
+    '<div style="display:flex;flex-wrap:wrap;justify-content:center;">' + qrBlocks + '</div>' +
+    '</div>' +
+    '<div class="footer">Powered by Eastern Produce Kenya Limited · fitnessfestival.co.ke<br/>Present this ticket (or QR code) at the gate for entry.</div>' +
     '</div>' +
     '<script>window.onload=function(){window.print();}<\/script>' +
     '</body></html>';
