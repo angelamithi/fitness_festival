@@ -811,15 +811,59 @@ async function loadCheckins() {
   } catch (e) { /* silent */ }
 }
 
-// ── Auto check-in from a QR scan: ?checkin=TKT-AB12CD in the URL
+// ── Check in ALL tickets in one order at once (one QR scan = whole order)
+async function checkInOrder(orderId) {
+  const resultEl = document.getElementById('checkinResult');
+  resultEl.innerHTML = '<div style="color:var(--muted);padding:2rem;text-align:center;">Checking…</div>';
+
+  try {
+    const token = getToken();
+    const res = await fetch(API_BASE + '/api/checkin-order/' + encodeURIComponent(orderId), {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      resultEl.innerHTML = `<div style="background:rgba(224,85,85,0.12);border:1px solid rgba(224,85,85,0.35);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">❌</div><p style="font-weight:600;color:#f07070;">${data.detail || 'Order Not Found'}</p></div>`;
+      return;
+    }
+
+    if (data.all_already_checked_in) {
+      resultEl.innerHTML = `<div style="background:rgba(224,128,64,0.12);border:1px solid rgba(224,128,64,0.3);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">🔁</div><p style="font-weight:600;color:#e09050;">Already Checked In</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">All ${data.total_tickets} ticket${data.total_tickets>1?'s':''} for ${data.name} were already scanned</p></div>`;
+    } else {
+      const partial = data.already_checked_in > 0;
+      resultEl.innerHTML = `<div style="background:rgba(58,125,48,0.18);border:1px solid rgba(58,125,48,0.4);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2.5rem;margin-bottom:0.5rem;">✅</div><p style="font-weight:700;color:#7dca6a;font-size:1.1rem;">${data.name}</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">${data.newly_checked_in} of ${data.total_tickets} ticket${data.total_tickets>1?'s':''} checked in${partial?' ('+data.already_checked_in+' already scanned)':''}</p><p style="color:var(--lime);font-size:0.8rem;margin-top:0.5rem;">${data.ticket_type==='free'?'Free/Disabled':'Standard'} · ${new Date(data.checked_in_at).toLocaleTimeString('en-KE')}</p></div>`;
+    }
+
+    loadCheckins();
+  } catch (e) {
+    resultEl.innerHTML = '<div style="color:#f07070;padding:2rem;text-align:center;">Network error. Try again.</div>';
+  }
+}
+
+// ── Auto check-in from a QR scan.
+// New QR codes encode ?checkin_order=<order_id> and check in every ticket
+// in that order at once (this is what bulk tickets use, so scanning one
+// code checks in all 100 attendees on a 100-ticket order in one go).
+// Older/legacy QR codes may still encode ?checkin=<ticket_id> for a single
+// ticket — both are supported here.
 function handleQrAutoCheckin() {
   const params = new URLSearchParams(window.location.search);
+  const orderId  = params.get('checkin_order');
   const ticketId = params.get('checkin');
-  if (!ticketId) return;
-  // Make sure we're on the check-in page and logged in, then fire the check-in
+
+  if (!orderId && !ticketId) return;
+
   showPage('checkin', document.querySelector('[onclick*="checkin"]'));
-  document.getElementById('checkinInput').value = ticketId;
-  checkIn(ticketId);
+
+  if (orderId) {
+    checkInOrder(orderId);
+  } else {
+    document.getElementById('checkinInput').value = ticketId;
+    checkIn(ticketId);
+  }
+
   // Clean the URL so refreshing doesn't re-trigger
   window.history.replaceState({}, '', window.location.pathname);
 }
@@ -852,16 +896,17 @@ function downloadTicket(ticketId) {
     '</tr>'
   ).join('');
 
-  // One QR code per ticket — generated server-side by our own backend
-  // (no dependency on any external QR image service).
-  const qrBlocks = ids.map(id =>
+  // One QR code for the WHOLE order — generated server-side by our own
+  // backend. Scanning it checks in all tickets on this order at once,
+  // instead of needing one scan per ticket (important for bulk orders).
+  const qrCaption = qty > 1 ? 'Scan once to check in all ' + qty + ' tickets' : 'Scan at the gate to check in';
+  const qrBlocks =
     '<div style="text-align:center;margin:0.5rem;">' +
-    '<img src="' + API_BASE + '/api/qr/' + encodeURIComponent(id) + '" ' +
-    'alt="QR code for ' + id + '" width="140" height="140" ' +
-    'style="background:#fff;border-radius:8px;padding:6px;"/>' +
-    '<div style="font-family:monospace;font-size:0.72rem;color:#b8d432;margin-top:0.35rem;">' + id + '</div>' +
-    '</div>'
-  ).join('');
+    '<img src="' + API_BASE + '/api/qr-order/' + encodeURIComponent(t.order_id) + '" ' +
+    'alt="Gate check-in QR code" width="180" height="180" ' +
+    'style="background:#fff;border-radius:8px;padding:8px;"/>' +
+    '<div style="font-family:Arial,sans-serif;font-size:0.78rem;color:#b8d432;margin-top:0.5rem;font-weight:600;">' + qrCaption + '</div>' +
+    '</div>';
 
   const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"/>' +
     '<title>Ticket — ' + t.name + '</title>' +

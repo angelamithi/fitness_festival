@@ -214,9 +214,10 @@ def send_ticket_email(ticket: dict, all_ticket_ids: list = None) -> None:
         for i, tid in enumerate(ids_list)
     )
 
-    # Build one QR code block per ticket — scanned at the gate on event day.
-    # Generated server-side with the qrcode library, embedded as inline base64
-    # so the email has no dependency on any external image service.
+    # Build ONE QR code per order, not per ticket. Scanning it at the gate
+    # checks in every ticket in this order in a single tap — important for
+    # bulk orders where one purchase might cover 50-100 tickets; nobody
+    # wants to scan 100 separate codes one by one.
     def generate_qr_base64(data: str) -> str:
         qr = qrcode.QRCode(
             version=None,
@@ -231,31 +232,35 @@ def send_ticket_email(ticket: dict, all_ticket_ids: list = None) -> None:
         img.save(buf, format="PNG")
         return base64.b64encode(buf.getvalue()).decode()
 
-    def qr_img_tag(tid: str) -> str:
-        # Encode a URL that opens the admin dashboard's Check-In page and
-        # auto-submits this ticket ID — so scanning the code at the gate
-        # checks the attendee in immediately, no manual typing required.
-        checkin_url = f"{ADMIN_URL}?checkin={tid}"
-        try:
-            b64 = generate_qr_base64(checkin_url)
-            src = f"data:image/png;base64,{b64}"
-        except Exception as e:
-            log.error(f"QR generation failed for {tid}: {e}")
-            # Fallback to external service if local generation ever fails
-            src = f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data={checkin_url}"
-        return (
-            f'<div style="text-align:center;margin:0.75rem 0;">'
-            f'<img src="{src}" alt="QR code for {tid}" width="140" height="140" '
-            f'style="background:#fff;border-radius:8px;padding:6px;display:inline-block;"/>'
-            f'<div style="font-family:monospace;font-size:0.75rem;color:#b8d432;margin-top:0.4rem;">{tid}</div>'
-            f'</div>'
-        )
+    order_id = ticket.get("order_id", "")
+    # Encode a URL that opens the admin dashboard's Check-In page and
+    # auto-submits this ORDER ID — checking in every ticket on the order
+    # at once, no manual typing and no scanning multiple codes required.
+    checkin_url = f"{ADMIN_URL}?checkin_order={order_id}"
+    try:
+        b64 = generate_qr_base64(checkin_url)
+        qr_src = f"data:image/png;base64,{b64}"
+    except Exception as e:
+        log.error(f"QR generation failed for order={order_id}: {e}")
+        # Fallback to external service if local generation ever fails
+        qr_src = f"https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data={checkin_url}"
 
-    qr_blocks = "".join(qr_img_tag(tid) for tid in ids_list)
+    qr_caption = (
+        f"Scan once to check in all {quantity} tickets"
+        if quantity > 1 else
+        "Scan at the gate to check in"
+    )
+    qr_blocks = (
+        f'<div style="text-align:center;margin:0.75rem 0;">'
+        f'<img src="{qr_src}" alt="Gate check-in QR code" width="180" height="180" '
+        f'style="background:#fff;border-radius:8px;padding:8px;display:inline-block;"/>'
+        f'<div style="font-family:Arial,sans-serif;font-size:0.78rem;color:#b8d432;margin-top:0.5rem;font-weight:600;">{qr_caption}</div>'
+        f'</div>'
+    )
 
     bulk_note = (
         '<div style="background:#142418;border-radius:8px;padding:1rem;font-size:0.82rem;color:#8a9e82;margin-top:1rem;">' +
-        f'Each of the {quantity} QR codes above checks in one person. Staff scan the code at the gate — no manual entry needed.' +
+        f'This single QR code checks in all {quantity} tickets at once when scanned at the gate.' +
         '</div>'
     ) if quantity > 1 else ""
 
@@ -548,14 +553,41 @@ async def register_free(body: FreeTicketRequest, db: AsyncSession = Depends(get_
     return {"success": True, "ticket_id": ticket_id, "email_sent": email_sent}
 
 
+@app.get("/api/qr-order/{order_id}")
+async def get_order_qr_code(order_id: str):
+    """
+    Generate ONE QR code for an entire order, server-side.
+    Scanning it at the gate checks in every ticket on that order at once —
+    this is what the admin dashboard's download-ticket feature uses now,
+    instead of generating one QR per individual ticket.
+    """
+    from fastapi.responses import Response
+    checkin_url = f"{ADMIN_URL}?checkin_order={order_id}"
+    try:
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=8,
+            border=2,
+        )
+        qr.add_data(checkin_url)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return Response(content=buf.getvalue(), media_type="image/png")
+    except Exception as e:
+        log.error(f"Order QR endpoint failed for {order_id}: {e}")
+        raise HTTPException(status_code=500, detail="Could not generate QR code.")
+
+
 @app.get("/api/qr/{ticket_id}")
 async def get_qr_code(ticket_id: str):
     """
-    Generate a QR code for a given ticket ID, server-side.
-    Encodes a check-in URL (not just the raw ID) so scanning the code
-    at the gate opens the admin Check-In page and submits it automatically.
-    Returns a PNG image directly — used by the admin dashboard's
-    download-ticket feature so it never depends on an external QR service.
+    Generate a QR code for a single ticket ID, server-side.
+    Kept for reference/backwards compatibility — the admin download-ticket
+    feature now uses /api/qr-order/{order_id} instead, since one QR per
+    order (not per ticket) is what gate staff actually want to scan.
     """
     from fastapi.responses import Response
     checkin_url = f"{ADMIN_URL}?checkin={ticket_id}"
@@ -627,12 +659,74 @@ async def admin_tickets(token: str = Depends(require_admin), db: AsyncSession = 
 # CHECK-IN ROUTES
 # ─────────────────────────────────────────────────────────────
 
+@app.post("/api/checkin-order/{order_id}")
+async def check_in_order(order_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    Check in EVERY ticket belonging to one order in a single call.
+    This is what the order-level QR code on a bulk ticket triggers — scan
+    once at the gate and all N tickets in that order are checked in
+    together, instead of scanning N separate codes one by one.
+    Idempotent: already-checked-in tickets in the order are simply skipped
+    and reported back, not duplicated or errored on.
+    """
+    result = await db.execute(select(Order).where(Order.order_id == order_id))
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found.")
+
+    if order.status != "completed":
+        raise HTTPException(
+            status_code=400,
+            detail=f"This order's payment is {order.status}, not completed. Cannot check in.",
+        )
+
+    ticket_ids = [t.strip() for t in order.ticket_id.split(",") if t.strip()]
+
+    # Find which of these tickets are already checked in
+    existing_result = await db.execute(
+        select(CheckIn).where(CheckIn.ticket_id.in_(ticket_ids))
+    )
+    already_checked_in_ids = {row.ticket_id for row in existing_result.scalars().all()}
+
+    newly_checked_in = []
+    for tid in ticket_ids:
+        if tid in already_checked_in_ids:
+            continue
+        checkin = CheckIn(
+            ticket_id=tid,
+            order_id=order.order_id,
+            name=order.name,
+            ticket_type=order.ticket_type,
+        )
+        db.add(checkin)
+        newly_checked_in.append(tid)
+
+    await db.commit()
+    log.info(
+        f"Checked in order={order_id} name={order.name} "
+        f"newly={len(newly_checked_in)} already_in={len(already_checked_in_ids)} "
+        f"total={len(ticket_ids)}"
+    )
+
+    return {
+        "success":               True,
+        "order_id":              order_id,
+        "name":                  order.name,
+        "ticket_type":           order.ticket_type,
+        "total_tickets":         len(ticket_ids),
+        "newly_checked_in":      len(newly_checked_in),
+        "already_checked_in":    len(already_checked_in_ids),
+        "all_already_checked_in": len(newly_checked_in) == 0,
+        "checked_in_at":         datetime.now(timezone.utc).isoformat(),
+    }
+
+
 @app.post("/api/checkin/{ticket_id}")
 async def check_in_ticket(ticket_id: str, db: AsyncSession = Depends(get_db)):
     """
-    Check in a single ticket by its ID. This is what both the QR-code scan
-    page and the manual admin Check-In box call. Idempotent: scanning an
-    already-checked-in ticket returns its original check-in time rather
+    Check in a single ticket by its ID. Used by the manual admin Check-In
+    box for typing in one ticket ID or a phone number. Idempotent: scanning
+    an already-checked-in ticket returns its original check-in time rather
     than erroring or duplicating.
     """
     # Find the order this ticket belongs to (ticket_id may be inside a
