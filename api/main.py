@@ -31,7 +31,7 @@ from email.mime.multipart import MIMEMultipart
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-from api.database import init_db, get_db, Order
+from api.database import init_db, get_db, Order, CheckIn
 
 # ─────────────────────────────────────────────────────────────
 # Setup
@@ -95,6 +95,9 @@ IS_DEV = os.getenv("ENV", "development") != "production"
 log.info(f"M-Pesa env: {mpesa.env} | shortcode: {mpesa.shortcode} | passkey length: {len(mpesa.passkey)} chars")
 
 ADMIN_USERNAME     = os.getenv("ADMIN_USERNAME", "admin")
+# Base URL of the admin dashboard — used to build QR-code check-in links.
+# e.g. https://www.fitnessfestival.co.ke/admin
+ADMIN_URL          = os.getenv("ADMIN_URL", "https://www.fitnessfestival.co.ke/admin")
 ADMIN_PASSWORD     = os.getenv("ADMIN_PASSWORD", "festival2026")
 JWT_SECRET         = os.getenv("JWT_SECRET",     "change-this-secret-in-env")
 TOKEN_EXPIRE_HOURS = int(os.getenv("TOKEN_EXPIRE_HOURS", "8"))
@@ -229,13 +232,17 @@ def send_ticket_email(ticket: dict, all_ticket_ids: list = None) -> None:
         return base64.b64encode(buf.getvalue()).decode()
 
     def qr_img_tag(tid: str) -> str:
+        # Encode a URL that opens the admin dashboard's Check-In page and
+        # auto-submits this ticket ID — so scanning the code at the gate
+        # checks the attendee in immediately, no manual typing required.
+        checkin_url = f"{ADMIN_URL}?checkin={tid}"
         try:
-            b64 = generate_qr_base64(tid)
+            b64 = generate_qr_base64(checkin_url)
             src = f"data:image/png;base64,{b64}"
         except Exception as e:
             log.error(f"QR generation failed for {tid}: {e}")
             # Fallback to external service if local generation ever fails
-            src = f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data={tid}"
+            src = f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data={checkin_url}"
         return (
             f'<div style="text-align:center;margin:0.75rem 0;">'
             f'<img src="{src}" alt="QR code for {tid}" width="140" height="140" '
@@ -248,7 +255,7 @@ def send_ticket_email(ticket: dict, all_ticket_ids: list = None) -> None:
 
     bulk_note = (
         '<div style="background:#142418;border-radius:8px;padding:1rem;font-size:0.82rem;color:#8a9e82;margin-top:1rem;">' +
-        f'Each of the {quantity} ticket IDs above grants one person entry. Present any QR code at the gate.' +
+        f'Each of the {quantity} QR codes above checks in one person. Staff scan the code at the gate — no manual entry needed.' +
         '</div>'
     ) if quantity > 1 else ""
 
@@ -545,10 +552,13 @@ async def register_free(body: FreeTicketRequest, db: AsyncSession = Depends(get_
 async def get_qr_code(ticket_id: str):
     """
     Generate a QR code for a given ticket ID, server-side.
+    Encodes a check-in URL (not just the raw ID) so scanning the code
+    at the gate opens the admin Check-In page and submits it automatically.
     Returns a PNG image directly — used by the admin dashboard's
     download-ticket feature so it never depends on an external QR service.
     """
     from fastapi.responses import Response
+    checkin_url = f"{ADMIN_URL}?checkin={ticket_id}"
     try:
         qr = qrcode.QRCode(
             version=None,
@@ -556,7 +566,7 @@ async def get_qr_code(ticket_id: str):
             box_size=8,
             border=2,
         )
-        qr.add_data(ticket_id)
+        qr.add_data(checkin_url)
         qr.make(fit=True)
         img = qr.make_image(fill_color="black", back_color="white")
         buf = io.BytesIO()
@@ -611,6 +621,87 @@ async def admin_tickets(token: str = Depends(require_admin), db: AsyncSession = 
     result = await db.execute(select(Order).order_by(Order.created_at.desc()))
     orders = result.scalars().all()
     return [order_to_dict(o) for o in orders]
+
+
+# ─────────────────────────────────────────────────────────────
+# CHECK-IN ROUTES
+# ─────────────────────────────────────────────────────────────
+
+@app.post("/api/checkin/{ticket_id}")
+async def check_in_ticket(ticket_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    Check in a single ticket by its ID. This is what both the QR-code scan
+    page and the manual admin Check-In box call. Idempotent: scanning an
+    already-checked-in ticket returns its original check-in time rather
+    than erroring or duplicating.
+    """
+    # Find the order this ticket belongs to (ticket_id may be inside a
+    # comma-separated list on a bulk order)
+    result = await db.execute(
+        select(Order).where(Order.ticket_id.like(f"%{ticket_id}%"))
+    )
+    orders = result.scalars().all()
+    order = next(
+        (o for o in orders if ticket_id in [t.strip() for t in o.ticket_id.split(",")]),
+        None,
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Ticket ID not found.")
+
+    if order.status != "completed":
+        raise HTTPException(
+            status_code=400,
+            detail=f"This ticket's payment is {order.status}, not completed. Cannot check in.",
+        )
+
+    # Already checked in?
+    existing = await db.execute(select(CheckIn).where(CheckIn.ticket_id == ticket_id))
+    existing_row = existing.scalar_one_or_none()
+    if existing_row:
+        return {
+            "success":       True,
+            "already_checked_in": True,
+            "ticket_id":     ticket_id,
+            "name":          existing_row.name,
+            "ticket_type":   existing_row.ticket_type,
+            "checked_in_at": existing_row.checked_in_at.isoformat(),
+        }
+
+    checkin = CheckIn(
+        ticket_id=ticket_id,
+        order_id=order.order_id,
+        name=order.name,
+        ticket_type=order.ticket_type,
+    )
+    db.add(checkin)
+    await db.commit()
+    log.info(f"Checked in ticket={ticket_id} name={order.name}")
+
+    return {
+        "success":             True,
+        "already_checked_in":  False,
+        "ticket_id":           ticket_id,
+        "name":                order.name,
+        "ticket_type":         order.ticket_type,
+        "checked_in_at":       checkin.checked_in_at.isoformat() if checkin.checked_in_at else datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@app.get("/api/admin/checkins")
+async def list_checkins(token: str = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    """All check-ins so far today, most recent first — powers the admin Check-In page table."""
+    result = await db.execute(select(CheckIn).order_by(CheckIn.checked_in_at.desc()))
+    rows = result.scalars().all()
+    return [
+        {
+            "ticket_id":     r.ticket_id,
+            "order_id":      r.order_id,
+            "name":          r.name,
+            "ticket_type":   r.ticket_type,
+            "checked_in_at": r.checked_in_at.isoformat() if r.checked_in_at else None,
+        }
+        for r in rows
+    ]
 
 
 # ─────────────────────────────────────────────────────────────

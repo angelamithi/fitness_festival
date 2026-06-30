@@ -46,6 +46,22 @@ class Order(Base):
     created_at          = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class CheckIn(Base):
+    """
+    Tracks gate check-in status for each INDIVIDUAL ticket.
+    Bulk orders store multiple ticket IDs comma-separated on one Order row,
+    but each ticket within that order needs to be checked in separately —
+    so each gets its own row here, keyed by its own unique ticket_id.
+    """
+    __tablename__ = "checkins"
+
+    ticket_id     = Column(String, primary_key=True)   # e.g. "TKT-AB12CD"
+    order_id      = Column(String, nullable=False, index=True)
+    name          = Column(String, nullable=False)
+    ticket_type   = Column(String, nullable=False, default="standard")
+    checked_in_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 async def init_db():
     """Create tables if they don't exist (runs on startup)."""
     async with engine.begin() as conn:

@@ -517,7 +517,7 @@ const DEMO = (() => {
   return rows.sort((a,b) => b.date - a.date);
 })();
 
-const checkins = [];
+// checkins are now persisted server-side (see loadCheckins / checkIn functions below)
 let currentPage = 1;
 const PER_PAGE = 10;
 
@@ -532,6 +532,7 @@ function showPage(id, btn) {
   if (id === 'sales') renderSalesTable(getLiveData());
   if (id === 'revenue') renderRevenue();
   if (id === 'mpesa') renderMpesa();
+  if (id === 'checkin') loadCheckins();
 }
 
 // ── Load / refresh
@@ -746,32 +747,81 @@ function renderMpesa() {
   `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;">No transactions yet</td></tr>';
 }
 
-// ── Check-in
-function checkIn() {
-  const val = document.getElementById('checkinInput').value.trim();
+// ── Check-in (backed by real API — persists across sessions/devices)
+async function checkIn(ticketIdOverride) {
+  const inputEl  = document.getElementById('checkinInput');
+  const val      = (ticketIdOverride || inputEl.value).trim();
   const resultEl = document.getElementById('checkinResult');
   if (!val) return;
-  const ticket = getLiveData().find(r=>r.ticket_id.toLowerCase()===val.toLowerCase()||r.phone===val.replace(/\s/g,''));
-  if (!ticket) {
-    resultEl.innerHTML = `<div style="background:rgba(224,85,85,0.12);border:1px solid rgba(224,85,85,0.35);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">❌</div><p style="font-weight:600;color:#f07070;">Ticket Not Found</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">No ticket found for "${val}"</p></div>`;
-    return;
+
+  // Allow checking in by phone too: look up the live data first to resolve
+  // a phone number or partial match into an actual ticket_id.
+  let ticketIdToCheck = val;
+  const isPhoneOrName = !/^TKT-/i.test(val);
+  if (isPhoneOrName) {
+    const order = getLiveData().find(r => r.phone === val.replace(/\s/g, ''));
+    if (order) {
+      const ids = (order.ticket_id || '').split(',').map(s => s.trim()).filter(Boolean);
+      ticketIdToCheck = ids[0]; // check in the first ticket on that order
+    }
   }
-  if (ticket.status==='pending'||ticket.status==='failed') {
-    resultEl.innerHTML = `<div style="background:rgba(224,128,64,0.12);border:1px solid rgba(224,128,64,0.3);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">⚠️</div><p style="font-weight:600;color:#e09050;">Payment Not Confirmed</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">This ticket's payment is ${ticket.status}.</p></div>`;
-    return;
+
+  resultEl.innerHTML = '<div style="color:var(--muted);padding:2rem;text-align:center;">Checking…</div>';
+
+  try {
+    const token = getToken();
+    const res = await fetch(API_BASE + '/api/checkin/' + encodeURIComponent(ticketIdToCheck), {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      resultEl.innerHTML = `<div style="background:rgba(224,85,85,0.12);border:1px solid rgba(224,85,85,0.35);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">❌</div><p style="font-weight:600;color:#f07070;">${data.detail || 'Ticket Not Found'}</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">"${val}"</p></div>`;
+      return;
+    }
+
+    if (data.already_checked_in) {
+      const time = new Date(data.checked_in_at).toLocaleTimeString('en-KE');
+      resultEl.innerHTML = `<div style="background:rgba(224,128,64,0.12);border:1px solid rgba(224,128,64,0.3);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">🔁</div><p style="font-weight:600;color:#e09050;">Already Checked In</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">${data.name} was checked in at ${time}</p></div>`;
+    } else {
+      const time = new Date(data.checked_in_at).toLocaleTimeString('en-KE');
+      resultEl.innerHTML = `<div style="background:rgba(58,125,48,0.18);border:1px solid rgba(58,125,48,0.4);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2.5rem;margin-bottom:0.5rem;">✅</div><p style="font-weight:700;color:#7dca6a;font-size:1.1rem;">${data.name}</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">${data.ticket_id} · ${data.ticket_type==='free'?'Free/Disabled':'Standard'}</p><p style="color:var(--lime);font-size:0.8rem;margin-top:0.5rem;">Checked in at ${time}</p></div>`;
+    }
+
+    inputEl.value = '';
+    loadCheckins();
+  } catch (e) {
+    resultEl.innerHTML = '<div style="color:#f07070;padding:2rem;text-align:center;">Network error. Try again.</div>';
   }
-  const alreadyIn = checkins.find(c=>c.id===ticket.ticket_id);
-  if (alreadyIn) {
-    resultEl.innerHTML = `<div style="background:rgba(224,128,64,0.12);border:1px solid rgba(224,128,64,0.3);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">🔁</div><p style="font-weight:600;color:#e09050;">Already Checked In</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">${ticket.name} was checked in at ${alreadyIn.time}</p></div>`;
-    return;
-  }
-  const time = new Date().toLocaleTimeString('en-KE');
-  checkins.push({...ticket, time, id: ticket.ticket_id});
-  resultEl.innerHTML = `<div style="background:rgba(58,125,48,0.18);border:1px solid rgba(58,125,48,0.4);border-radius:var(--radius);padding:1.5rem;text-align:center;"><div style="font-size:2.5rem;margin-bottom:0.5rem;">✅</div><p style="font-weight:700;color:#7dca6a;font-size:1.1rem;">${ticket.name}</p><p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">${ticket.ticket_id} · ${ticket.ticket_type==='free'?'Free/Disabled':'Standard'}</p><p style="color:var(--lime);font-size:0.8rem;margin-top:0.5rem;">Checked in at ${time}</p></div>`;
-  document.getElementById('checkinBody').innerHTML = checkins.map(c=>`
-    <tr><td><span class="ticket-id">${c.ticket_id}</span></td><td>${c.name}</td><td>${c.ticket_type==='free'?'Free/Disabled':'Standard'}</td><td style="color:var(--lime);">${c.time}</td></tr>
-  `).join('');
-  document.getElementById('checkinInput').value='';
+}
+
+// ── Load check-in history from the server
+async function loadCheckins() {
+  const token = getToken();
+  if (!token) return;
+  try {
+    const res = await fetch(API_BASE + '/api/admin/checkins', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) return;
+    const rows = await res.json();
+    document.getElementById('checkinBody').innerHTML = rows.map(c => {
+      const time = c.checked_in_at ? new Date(c.checked_in_at).toLocaleTimeString('en-KE') : '—';
+      return `<tr><td><span class="ticket-id">${c.ticket_id}</span></td><td>${c.name}</td><td>${c.ticket_type==='free'?'Free/Disabled':'Standard'}</td><td style="color:var(--lime);">${time}</td></tr>`;
+    }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1.5rem;">No check-ins yet</td></tr>';
+  } catch (e) { /* silent */ }
+}
+
+// ── Auto check-in from a QR scan: ?checkin=TKT-AB12CD in the URL
+function handleQrAutoCheckin() {
+  const params = new URLSearchParams(window.location.search);
+  const ticketId = params.get('checkin');
+  if (!ticketId) return;
+  // Make sure we're on the check-in page and logged in, then fire the check-in
+  showPage('checkin', document.querySelector('[onclick*="checkin"]'));
+  document.getElementById('checkinInput').value = ticketId;
+  checkIn(ticketId);
+  // Clean the URL so refreshing doesn't re-trigger
+  window.history.replaceState({}, '', window.location.pathname);
 }
 
 // ── Export CSV
@@ -854,7 +904,7 @@ function downloadTicket(ticketId) {
     '<p style="color:#8a9e82;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;text-align:center;margin-bottom:0.5rem;">Scan at the Gate</p>' +
     '<div style="display:flex;flex-wrap:wrap;justify-content:center;">' + qrBlocks + '</div>' +
     '</div>' +
-    '<div class="footer">Powered by Eastern Produce Kenya Limited · fitnessfestival.co.ke<br/>Present this ticket (or QR code) at the gate for entry.</div>' +
+    '<div class="footer">Powered by Eastern Produce Kenya Limited · fitnessfestival.co.ke<br/>Show your QR code at the gate — staff will scan it to check you in instantly.</div>' +
     '</div>' +
     '<script>window.onload=function(){window.print();}<\/script>' +
     '</body></html>';
@@ -910,6 +960,7 @@ async function attemptLogin() {
       document.getElementById('loginScreen').classList.add('hidden');
       err.classList.remove('show');
       loadData();
+      handleQrAutoCheckin();
     } else {
       err.textContent = data.detail || 'Invalid username or password.';
       err.classList.add('show');
@@ -952,6 +1003,7 @@ async function logout() {
       if (res.ok) {
         document.getElementById('loginScreen').classList.add('hidden');
         loadData();
+        handleQrAutoCheckin();
         return;
       }
     } catch(e) {}
